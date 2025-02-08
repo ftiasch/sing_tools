@@ -1,0 +1,39 @@
+from io import StringIO
+
+import pyinfra.facts.server
+from pyinfra import host
+from pyinfra.operations import files, server
+
+import app
+
+# Generate the configuration
+config_content = app._generate(host.name)
+
+# Write the generated configuration to /etc/mihomo/config.yaml
+files.put(
+    name="Write generated configuration to config.yaml",
+    src=StringIO(config_content),
+    dest="/etc/mihomo/config.yaml",
+)
+
+if (
+    host.get_fact(
+        pyinfra.facts.server.LinuxDistribution,
+    ).get("name", "")
+    == "ImmortalWrt"
+):
+    # Upload the mihomo init script
+    files.put(
+        name="Upload mihomo init script",
+        src="init.d/mihomo",
+        dest="/etc/init.d/mihomo",
+    )
+
+    # Set the executable permission
+    files.file(
+        name="Set executable permission for mihomo init script",
+        path="/etc/init.d/mihomo",
+        mode="755",
+    )
+
+    server.service(service="mihomo", restarted=True)

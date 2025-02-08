@@ -1,0 +1,23 @@
+db-path: ./db.json
+
+timeout: 10
+paramiko:
+  host: cn-relay.internet.limao.tech
+providers:
+  ok: https://rss.okxyz.xyz/link/zGjkzJeqP83WXt46?mu=2
+  ww: https://xb1821.com/rss/mEWrAf3/CBQG7I?net_type=ALL
+
+hosts:
+  base: &base
+    outbounds:
+      - ok
+      - ww
+    extra-outbounds: []
+  camp-pk:
+    <<: *base
+  marf-bj:
+    <<: *base
+  marf-sh:
+    <<: *base
+
+github-proxy: https://ghfast.top/
