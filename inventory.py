@@ -1,1 +1,1 @@
-hosts = ["marf-bj", "marf-sh", "camp-pk"]
+hosts = ["marf-sh", "camp-pk"]
