@@ -38,10 +38,19 @@ def b64decode(b):
     return base64.urlsafe_b64decode(b + "=" * (-len(b) % 4)).decode("utf-8")
 
 
+SING_DIAL = {
+    "reuse_addr": True,
+    "tcp_fast_open": True,
+    "tcp_multi_path": True,
+    "udp_fragment": True,
+}
+
+
 class Outbound:
     __provider: str
     __name: str
     mihomo: dict
+    sing: dict
 
     @property
     def name(self):
@@ -76,6 +85,7 @@ class Outbound:
                     "obfs": obfs,
                     "password": password,
                 }
+
             case "trojan":
                 parts = parsed_url.netloc.split("@")
                 if len(parts) != 2:
@@ -94,6 +104,18 @@ class Outbound:
                     "password": password,
                     "sni": sni,
                     "skip-cert-verify": skip_cert_verify,
+                }
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "trojan",
+                    "server": server,
+                    "server_port": int(port),
+                    "password": password,
+                    "tls": {
+                        "enabled": True,
+                        "insecure": skip_cert_verify,
+                        "server_name": sni,
+                    },
                 }
             case "vless":
                 parts = parsed_url.netloc.split("@")
@@ -121,12 +143,40 @@ class Outbound:
                 }
                 if security == "tls":
                     self.mihomo["tls"] = True
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "vless",
+                    "server": server,
+                    "server_port": int(port),
+                    "tls": {
+                        "enabled": True,
+                        "server_name": sni,
+                        "utls": {"enabled": True, "fingerprint": fp},
+                    },
+                    "uuid": uuid,
+                    "flow": "",
+                }
                 if transport == "grpc":
-                    self.mihomo["grpc-opts"] = {
-                        "grpc-service-name": qs.get("serviceName", [""])[0]
+                    grpc_service_name = qs.get("serviceName", [""])[0]
+                    self.mihomo["grpc-opts"] = {"grpc-service-name": grpc_service_name}
+                    self.sing["transport"] = {
+                        "type": "grpc",
+                        "service_name": grpc_service_name,
                     }
             case _:
                 raise ValueError("Unknown scheme")
+
+    def get_named_config(self, name, proxy_type):
+        if proxy_type == "mihomo":
+            config = self.mihomo.copy()
+            config["name"] = name
+            return config
+        elif proxy_type == "sing":
+            config = self.sing.copy()
+            config["tag"] = name
+            return config
+        else:
+            raise ValueError(f"Unsupported proxy type: {proxy_type}")
 
 
 class ShareLink:
@@ -169,35 +219,70 @@ def download():
         FileUtils._save_db(config, db)
 
 
-def _generate(host: str):
+def _generate(host):
     logging.info("[sing_tools]")
     config = FileUtils._load_yaml_file("config.yaml")
     host_config = config["hosts"][host]
     db = FileUtils._load_db(config)
     outbounds = []
     for name in host_config["outbounds"]:
-        data = db["providers"][name]
+        sing_config = db["providers"][name]
         logging.info("%s: Parsing proxies...", name)
-        for o in ShareLink.parse(name, data[-1]):
+        for o in ShareLink.parse(name, sing_config[-1]):
             if name == "ww" and o.mihomo["type"] == "ssr":
                 continue
             outbounds.append(o)
 
+    proxy_type = host_config["type"]
+    if proxy_type not in ("mihomo", "sing"):
+        raise ValueError(f"Unsupported proxy type: {proxy_type}")
     names, proxies = {}, []
     for o in outbounds:
         n = o.name
         count = names[n] = names.get(n, 0) + 1
         if count > 1:
             n += "#" + str(count - 1)
-        m = o.mihomo.copy()
-        m["name"] = n
-        proxies.append(m)
+        proxies.append(o.get_named_config(n, proxy_type))
     env = Environment(loader=FileSystemLoader("templates"))
     env.filters.update({"toyaml": lambda d: yaml.dump(d, allow_unicode=True).strip()})
-    return env.get_template(f"{host}.yaml").render(
-        github_proxy=config.get("github-proxy", ""),
+    github_proxy = config.get("github-proxy", "")
+    yaml_str = env.get_template(f"{host}.yaml").render(
+        github_proxy=github_proxy,
         proxies=proxies,
     )
+    match proxy_type:
+        case "mihomo":
+            return yaml_str
+        case "sing":
+            # sing post process
+            sing_config = yaml.safe_load(yaml_str)
+            rule_sets = set()
+            for rules in (sing_config["dns"]["rules"], sing_config["route"]["rules"]):
+                for rule in rules:
+                    used_rule_set = rule.get("rule_set", None)
+                    if used_rule_set is not None:
+                        if isinstance(used_rule_set, str):
+                            rule_sets.add(used_rule_set)
+                        else:
+                            for urs in used_rule_set:
+                                rule_sets.add(urs)
+            for rule_set in rule_sets:
+                if rule_set.startswith("geoip"):
+                    url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{rule_set}.srs"
+                else:
+                    url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{rule_set}.srs"
+                sing_config["route"]["rule_set"].append(
+                    {
+                        "download_detour": "direct",
+                        "format": "binary",
+                        "tag": rule_set,
+                        "type": "remote",
+                        "update_interval": "1d",
+                        "url": github_proxy + url,
+                    }
+                )
+                pass
+            return json.dumps(sing_config, ensure_ascii=False, indent=2)
 
 
 @app.command()

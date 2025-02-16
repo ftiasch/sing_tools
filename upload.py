@@ -8,12 +8,18 @@ import app
 
 # Generate the configuration
 config_content = app._generate(host.name)
+if host.data.type == "mihomo":
+    config_path = "/etc/mihomo/config.yaml"
+elif host.data.type == "sing":
+    config_path = "/etc/sing-box/config.json"
+else:
+    raise ValueError(f"Unsupported type: {host.data.type}")
 
 # Write the generated configuration to /etc/mihomo/config.yaml
 files.put(
-    name="Write generated configuration to config.yaml",
+    name="Write generated configuration to configuration file",
     src=StringIO(config_content),
-    dest="/etc/mihomo/config.yaml",
+    dest=config_path,
 )
 
 if (
@@ -22,18 +28,21 @@ if (
     ).get("name", "")
     == "ImmortalWrt"
 ):
-    # Upload the mihomo init script
-    files.put(
-        name="Upload mihomo init script",
-        src="init.d/mihomo",
-        dest="/etc/init.d/mihomo",
-    )
+    if host.data.type == "mihomo":
+        # Upload the mihomo init script
+        files.put(
+            name="Upload mihomo init script",
+            src="init.d/mihomo",
+            dest="/etc/init.d/mihomo",
+        )
 
-    # Set the executable permission
-    files.file(
-        name="Set executable permission for mihomo init script",
-        path="/etc/init.d/mihomo",
-        mode="755",
-    )
+        # Set the executable permission
+        files.file(
+            name="Set executable permission for mihomo init script",
+            path="/etc/init.d/mihomo",
+            mode="755",
+        )
 
-    server.service(service="mihomo", restarted=True)
+        server.service(service="mihomo", restarted=True)
+    elif host.data.type == "sing":
+        server.service(service="sing-box", restarted=True)

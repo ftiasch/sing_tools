@@ -108,7 +108,6 @@ rules:
   - GEOSITE,private,direct-out
   - GEOSITE,apple,direct-out
   - GEOSITE,adobe-activation,direct-out
-  - GEOSITE,google-cn,direct-out
   - GEOSITE,tld-cn,direct-out
   - GEOSITE,category-games@cn,direct-out
   - GEOSITE,geolocation-!cn,proxy-out

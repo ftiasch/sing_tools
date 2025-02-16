@@ -13,9 +13,8 @@ hosts:
       - ok
       - ww
     extra-outbounds: []
+    type: sing
   camp-pk:
-    <<: *base
-  marf-bj:
     <<: *base
   marf-sh:
     <<: *base
