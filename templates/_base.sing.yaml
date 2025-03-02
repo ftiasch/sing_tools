@@ -28,6 +28,8 @@ dns:
     - domain_suffix:
         - note.com
       server: dns_proxy
+    - rule_set: geosite-github
+      server: dns_proxy
     - rule_set: geosite-geolocation-!cn
       query_type:
         - A
