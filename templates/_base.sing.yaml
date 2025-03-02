@@ -25,6 +25,9 @@ dns:
   rules:
     - outbound: any
       server: dns_resolver
+    - domain_suffix:
+        - note.com
+      server: dns_proxy
     - rule_set: geosite-geolocation-!cn
       query_type:
         - A
@@ -61,6 +64,9 @@ route:
     - port: 443
       network: udp
       action: reject
+    - domain_suffix:
+        - note.com
+      outbound: japan-out
     - rule_set: geosite-github
       outbound: proxy-out
     - rule_set:
@@ -98,15 +104,15 @@ inbounds:
 outbounds:
   - type: direct
     tag: direct
+  {% for group_name, group_proxies in proxy_groups.items() %}
   - type: urltest
-    tag: proxy-out
+    tag: {{ group_name }}
     outbounds: 
-  {%- for proxy in proxies %}
-      - {{ proxy["tag"] | toyaml -}}
-  {% endfor %}
+{{ group_proxies | toyaml | indent(6, true) }}
     interval: 1m
     tolerance: 50
     url: https://cp.cloudflare.com/generate_204
+  {% endfor %}
 {{ proxies | toyaml | indent(2, true) }}
 experimental:
   cache_file:

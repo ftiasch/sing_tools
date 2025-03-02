@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import re
 from urllib.parse import parse_qs, unquote, urlparse
 
 import paramiko
@@ -12,6 +13,9 @@ from jinja2 import Environment, FileSystemLoader
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+# Precompile regex pattern for Japan variants
+JP_PATTERN = re.compile(r"(JP|japan|🇯|日本)", re.IGNORECASE)
 
 
 class FileUtils:
@@ -219,6 +223,23 @@ def download():
         FileUtils._save_db(config, db)
 
 
+class ProxyGrouper:
+    def __init__(self, proxies):
+        self.groups = {}
+        for proxy in proxies:
+            name = proxy.get("name") or proxy.get(
+                "tag"
+            )  # `name` for mihomo, `tag` for sing
+            self.__add("proxy-out", name)
+            if JP_PATTERN.search(name):
+                self.__add("japan-out", name)
+
+    def __add(self, group, name):
+        if group not in self.groups:
+            self.groups[group] = []
+        self.groups[group].append(name)
+
+
 def _generate(host):
     logging.info("[sing_tools]")
     config = FileUtils._load_yaml_file("config.yaml")
@@ -243,12 +264,14 @@ def _generate(host):
         if count > 1:
             n += "#" + str(count - 1)
         proxies.append(o.get_named_config(n, proxy_type))
+    proxy_groups = ProxyGrouper(proxies).groups
     env = Environment(loader=FileSystemLoader("templates"))
     env.filters.update({"toyaml": lambda d: yaml.dump(d, allow_unicode=True).strip()})
     github_proxy = config.get("github-proxy", "")
     yaml_str = env.get_template(f"{host}.yaml").render(
         github_proxy=github_proxy,
         proxies=proxies,
+        proxy_groups=proxy_groups,
     )
     match proxy_type:
         case "mihomo":
@@ -256,6 +279,15 @@ def _generate(host):
         case "sing":
             # sing post process
             sing_config = yaml.safe_load(yaml_str)
+            # remove rules against invalid outbounds
+            sing_config["route"]["rules"] = [
+                rule
+                for rule in sing_config["route"]["rules"]
+                if rule.get("outbound", None) is None
+                or rule["outbound"] == "direct"
+                or rule["outbound"] in proxy_groups
+            ]
+            # add rule sets
             rule_sets = set()
             for rules in (sing_config["dns"]["rules"], sing_config["route"]["rules"]):
                 for rule in rules:
