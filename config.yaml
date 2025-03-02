@@ -4,7 +4,7 @@ timeout: 10
 paramiko:
   host: cn-relay.internet.limao.tech
 providers:
-  ok: https://rss.okxyz.xyz/link/zGjkzJeqP83WXt46?mu=2
+  ok: https://rss.okxyz.top/link/dWrUOC2QE202F1rm?mu=2
   ww: https://xb1821.com/rss/mEWrAf3/CBQG7I?net_type=ALL
 
 hosts:
