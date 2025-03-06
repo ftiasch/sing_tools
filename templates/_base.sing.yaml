@@ -87,11 +87,12 @@ route:
       outbound: direct
     - ip_is_private: true
       outbound: direct
-  final: proxy-out
+  final: direct
   auto_detect_interface: true
 inbounds:
   - type: tun
     tag: tun-in
+    interface_name: tun0
     address:
       - 172.16.0.1/30
       - fd00::1/126
