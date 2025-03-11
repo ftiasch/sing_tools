@@ -87,7 +87,7 @@ route:
       outbound: direct
     - ip_is_private: true
       outbound: direct
-  final: direct
+  final: proxy-out
   auto_detect_interface: true
 inbounds:
   - type: tun

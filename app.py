@@ -64,6 +64,33 @@ class Outbound:
         self.__provider = provider
         parsed_url = urlparse(config)
         match parsed_url.scheme:
+            case "ss":
+                # Format: ss://base64(method:password)@host:port#name
+                netloc = parsed_url.netloc
+                if "@" not in netloc:
+                    raise ValueError("Invalid SS URL format")
+                method_password, server_port = netloc.split("@", 1)
+                decoded_method_password = b64decode(method_password)
+                if ":" not in decoded_method_password:
+                    raise ValueError("Invalid SS URL format")
+                method, password = decoded_method_password.split(":", 1)
+                server, port = server_port.split(":")
+                self.__name = unquote(parsed_url.fragment, encoding="utf-8")
+                self.mihomo = {
+                    "type": "ss",
+                    "server": server,
+                    "port": int(port),
+                    "method": method,
+                    "password": password,
+                }
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "shadowsocks",
+                    "server": server,
+                    "server_port": int(port),
+                    "method": method,
+                    "password": password,
+                }
             case "ssr":
                 parts = b64decode(parsed_url.netloc).split(":")
                 if len(parts) != 6:
@@ -89,7 +116,7 @@ class Outbound:
                     "obfs": obfs,
                     "password": password,
                 }
-
+                # FIXME: generate sing config
             case "trojan":
                 parts = parsed_url.netloc.split("@")
                 if len(parts) != 2:

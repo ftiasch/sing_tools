@@ -22,13 +22,13 @@ files.put(
     dest=config_path,
 )
 
-if (
-    host.get_fact(
-        pyinfra.facts.server.LinuxDistribution,
-    ).get("name", "")
-    == "ImmortalWrt"
-):
-    if host.data.type == "mihomo":
+if host.data.type == "mihomo":
+    if (
+        host.get_fact(
+            pyinfra.facts.server.LinuxDistribution,
+        ).get("name", "")
+        == "ImmortalWrt"
+    ):
         # Upload the mihomo init script
         files.put(
             name="Upload mihomo init script",
@@ -42,7 +42,6 @@ if (
             path="/etc/init.d/mihomo",
             mode="755",
         )
-
-        server.service(service="mihomo", restarted=True)
-    elif host.data.type == "sing":
-        server.service(service="sing-box", restarted=True)
+    server.service(service="mihomo", restarted=True, _sudo=True)
+else:
+    server.service(service="sing-box", restarted=True, _sudo=True)
