@@ -12,6 +12,6 @@ hosts_data = config["hosts"]
 hosts = []
 for host, details in hosts_data.items():
     if host != "base":
-        hosts.append((host, {"type": details["type"]}))
+        hosts.append((host, details))
 
 print(hosts)

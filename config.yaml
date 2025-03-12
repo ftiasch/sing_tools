@@ -15,15 +15,17 @@ hosts:
       - ww
     extra-outbounds: []
     type: sing
-  marf-bj:
-    <<: *base
-    outbounds:
-      - ok
+    sudo: false
   camp-pk:
     <<: *base
     outbounds:
       - ok
       - dg
+    sudo: true
+  marf-bj:
+    <<: *base
+    outbounds:
+      - ok
   marf-sh:
     <<: *base
 

@@ -22,6 +22,7 @@ files.put(
     dest=config_path,
 )
 
+sudo = host.data.sudo
 if host.data.type == "mihomo":
     if (
         host.get_fact(
@@ -42,6 +43,6 @@ if host.data.type == "mihomo":
             path="/etc/init.d/mihomo",
             mode="755",
         )
-    server.service(service="mihomo", restarted=True, _sudo=True)
+    server.service(service="mihomo", restarted=True, _sudo=sudo)
 else:
-    server.service(service="sing-box", restarted=True, _sudo=True)
+    server.service(service="sing-box", restarted=True, _sudo=sudo)
