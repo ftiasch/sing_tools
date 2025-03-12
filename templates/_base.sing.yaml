@@ -27,6 +27,7 @@ dns:
       server: dns_resolver
     - domain_suffix:
         - note.com
+        - zerion.io
       server: dns_proxy
     - rule_set: geosite-github
       server: dns_proxy
