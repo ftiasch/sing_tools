@@ -15,7 +15,8 @@ logging.basicConfig(
 )
 
 # Precompile regex pattern for Japan variants
-JP_PATTERN = re.compile(r"(JP|japan|🇯|日本)", re.IGNORECASE)
+JP_PATTERN = re.compile(r"(JP|japan|🇯🇵|日本)", re.IGNORECASE)
+RU_PATTERN = re.compile(r"(RU|russia|🇷🇺)", re.IGNORECASE)
 
 
 class FileUtils:
@@ -257,6 +258,8 @@ class ProxyGrouper:
             name = proxy.get("name") or proxy.get(
                 "tag"
             )  # `name` for mihomo, `tag` for sing
+            if RU_PATTERN.search(name):
+                continue
             self.__add("proxy-out", name)
             if JP_PATTERN.search(name):
                 self.__add("japan-out", name)
