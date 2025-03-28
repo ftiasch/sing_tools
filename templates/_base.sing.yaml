@@ -111,9 +111,10 @@ outbounds:
   {% for group_name, group_proxies in proxy_groups.items() %}
   - type: urltest
     tag: {{ group_name }}
-    outbounds: 
+    outbounds:
 {{ group_proxies | toyaml | indent(6, true) }}
-    interval: 1m
+    interrupt_exist_connections: true
+    interval: 30s
     tolerance: 50
     url: https://cp.cloudflare.com/generate_204
   {% endfor %}
