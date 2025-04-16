@@ -113,7 +113,7 @@ outbounds:
     tag: {{ group_name }}
     outbounds:
 {{ group_proxies | toyaml | indent(6, true) }}
-    interrupt_exist_connections: true
+    interrupt_exist_connections: false
     interval: 30s
     tolerance: 50
     url: https://cp.cloudflare.com/generate_204
