@@ -24,6 +24,6 @@ hosts:
   marf-sh:
     <<: *base
     outbounds:
-      - dg
+      - ok
 
 github-proxy: https://ghfast.top/
