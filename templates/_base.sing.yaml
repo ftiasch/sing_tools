@@ -72,6 +72,9 @@ route:
       outbound: japan-out
     - rule_set: geosite-github
       outbound: proxy-out
+    - domain_suffix:
+        - atcoder.jp
+      outbound: direct
     - rule_set:
         - geosite-adobe-activation
         - geosite-apple
