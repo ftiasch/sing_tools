@@ -68,6 +68,7 @@ route:
       network: udp
       action: reject
     - domain_suffix:
+        - atcoder.jp
         - note.com
       outbound: japan-out
     - rule_set: geosite-github
