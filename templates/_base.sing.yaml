@@ -67,6 +67,8 @@ route:
     - port: 443
       network: udp
       action: reject
+    - port: 123
+      outbound: direct
     - domain_suffix:
         - note.com
       outbound: japan-out
