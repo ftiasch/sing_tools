@@ -61,6 +61,7 @@ route:
     - inbound: tun-in
       action: sniff
     - protocol: dns
+      ip_cidr: 223.5.5.5
       action: hijack-dns
     - port: 853
       network: tcp
