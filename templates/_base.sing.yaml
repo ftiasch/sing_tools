@@ -1,5 +1,6 @@
 log:
   level: error
+  output: box.log
   timestamp: true
 dns:
   servers:
