@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import re
+from typing import Annotated
 from urllib.parse import parse_qs, unquote, urlparse
 
 import paramiko
@@ -229,7 +230,7 @@ app = typer.Typer()
 
 
 @app.command()
-def download():
+def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
     config = FileUtils._load_yaml_file("config.yaml")
     db = FileUtils._load_db(config)
     if "providers" not in db:
@@ -237,8 +238,12 @@ def download():
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
     ssh.connect(config["paramiko"]["host"])
+    provider_pattern = re.compile(provider_selector)
     try:
         for name, url in config["providers"].items():
+            if not provider_pattern.match(name):
+                continue
+            logging.info("%s: Downloading...", name)
             _, stdout, _ = ssh.exec_command(f"curl -m {config['timeout']} '{url}'")
             stdout = stdout.read().decode("utf-8")
             if stdout:
