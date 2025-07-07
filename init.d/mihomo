@@ -1,0 +1,27 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+START=99
+
+script=$(readlink "$initscript")
+NAME="$(basename ${script:-$initscript})"
+PROG="/usr/bin/mihomo"
+
+start_service() {
+	procd_open_instance "$NAME.main"
+	procd_set_param command "$PROG" -d /etc/mihomo
+
+	# respawn automatically if something died, be careful if you have an alternative process supervisor
+	# if process exits sooner than respawn_threshold, it is considered crashed and after 5 retries the service is stopped
+	# if process finishes later than respawn_threshold, it is restarted unconditionally, regardless of error code
+	# notice that this is literal respawning of the process, not in a respawn-on-failure sense
+	procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+
+	procd_set_param file /etc/mihomo/config.yaml
+	procd_set_param stdout 1                    # forward stdout of the command to logd
+	procd_set_param stderr 1                    # same for stderr
+	procd_set_param user root                   # run service as user nobody
+	procd_set_param pidfile /var/run/mihomo.pid # write a pid file on instance start and remove it on stop
+	procd_set_param term_timeout 60             # wait before sending SIGKILL
+	procd_close_instance
+}

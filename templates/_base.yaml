@@ -1,0 +1,116 @@
+# silent/error/warning/info/debug
+log-level: warning 
+
+proxies: 
+  - name: direct-out
+    type: direct
+    udp: true
+{{ proxies | toyaml | indent(2, true) }}
+
+proxy-groups:
+  - name: proxy-out
+    type: url-test
+    proxies: 
+  {%- for proxy in proxies %}
+      - {{ proxy["name"] | toyaml -}}
+  {% endfor %}
+    # tolerance: 150
+    # lazy: true
+    # expected-status: 204 # 当健康检查返回状态码与期望值不符时，认为节点不可用
+    url: https://cp.cloudflare.com/generate_204
+    interval: 300
+
+mixed-port: 8001
+ipv6: true
+allow-lan: true
+unified-delay: false
+tcp-concurrent: true
+external-controller: 0.0.0.0:9090
+external-ui: ui
+external-ui-url: https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip
+
+geodata-mode: true
+geox-url:
+  geoip: {{ github_proxy -}}https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat
+  geosite: {{ github_proxy -}}https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat
+  mmdb: {{ github_proxy -}}https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/country-lite.mmdb
+  asn: {{ github_proxy -}}https://mirror.ghproxy.com/https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb
+geo-auto-update: false
+geo-update-interval: 24
+
+find-process-mode: off
+global-client-fingerprint: chrome
+
+profile:
+  store-selected: true
+  store-fake-ip: true
+
+sniffer:
+  enable: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  skip-domain:
+    - Mijia Cloud
+    - +.push.apple.com
+
+tun:
+  enable: true
+  stack: mixed
+  device: tun0
+  auto-route: true
+  auto-redirect: true
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+    - tcp://any:53
+
+dns:
+  enable: true
+  ipv6: true  
+  respect-rules: true
+  enhanced-mode: fake-ip
+  fake-ip-filter:
+    - "*"
+    - "+.stun.*.*"
+    - "+.stun.*.*.*"
+    - "+.stun.*.*.*.*"
+    - "+.stun.*.*.*.*.*"
+    - +.lan
+    - +.local
+    - +.bopufund.com
+    - +.ftiasch.xyz
+    - +.limao.tech
+  default-nameserver:
+    - 223.5.5.5
+    - 114.114.114.114
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  proxy-server-nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  nameserver-policy:
+    "geosite:cn,private":
+      - https://doh.pub/dns-query
+      - https://dns.alidns.com/dns-query
+    "geosite:geolocation-!cn":
+      - https://dns.cloudflare.com/dns-query
+      - https://dns.google/dns-query
+
+rules:
+  - GEOIP,lan,direct-out,no-resolve
+  - GEOSITE,private,direct-out
+  - GEOSITE,apple,direct-out
+  - GEOSITE,adobe-activation,direct-out
+  - GEOSITE,tld-cn,direct-out
+  - GEOSITE,category-games@cn,direct-out
+  - GEOSITE,geolocation-!cn,proxy-out
+  - GEOSITE,cn,direct-out
+  - GEOIP,CN,direct-out
+  - MATCH,proxy-out
