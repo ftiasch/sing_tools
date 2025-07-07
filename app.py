@@ -18,6 +18,7 @@ logging.basicConfig(
 # Precompile regex pattern for Japan variants
 JP_PATTERN = re.compile(r"(JP|japan|🇯🇵|日本)", re.IGNORECASE)
 RU_PATTERN = re.compile(r"(RU|russia|🇷🇺)", re.IGNORECASE)
+US_PATTERN = re.compile(r"(US|United States|🇺🇸)", re.IGNORECASE)
 
 
 class FileUtils:
@@ -244,7 +245,7 @@ def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
             if not provider_pattern.match(name):
                 continue
             logging.info("%s: Downloading...", name)
-            _, stdout, _ = ssh.exec_command(f"curl -m {config['timeout']} '{url}'")
+            _, stdout, _ = ssh.exec_command(f"curl -4 -m {config['timeout']} '{url}'")
             stdout = stdout.read().decode("utf-8")
             if stdout:
                 db["providers"][name] = db["providers"].get(name, []) + [stdout]
@@ -267,7 +268,9 @@ class ProxyGrouper:
                 continue
             self.__add("proxy-out", name)
             if JP_PATTERN.search(name):
-                self.__add("japan-out", name)
+                self.__add("jp-out", name)
+            if US_PATTERN.search(name):
+                self.__add("us-out", name)
 
     def __add(self, group, name):
         if group not in self.groups:

@@ -74,9 +74,9 @@ route:
     - domain_suffix:
         - note.com
         # - puzsq.logicpuzzle.app
-      outbound: japan-out
-    - rule_set: geosite-google-gemini
-      outbound: japan-out
+      outbound: jp-out
+    - rule_set: geosite-google
+      outbound: us-out
     - rule_set: geosite-github
       outbound: proxy-out
     - domain_suffix:
