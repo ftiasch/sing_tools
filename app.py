@@ -172,7 +172,7 @@ class Outbound:
                     "uuid": uuid,
                     "servername": sni,
                     "flow": flow,
-                    "network": transport,
+                    "network": "tcp",
                     "client-fingerprint": fp,
                 }
                 if security == "tls":
@@ -188,7 +188,8 @@ class Outbound:
                         "utls": {"enabled": True, "fingerprint": fp},
                     },
                     "uuid": uuid,
-                    "flow": "",
+                    "flow": "xtls-rprx-vision",
+                    "network": "tcp",
                 }
                 if transport == "grpc":
                     grpc_service_name = qs.get("serviceName", [""])[0]

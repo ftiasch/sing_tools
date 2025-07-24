@@ -71,18 +71,9 @@ route:
       action: reject
     - port: 123
       outbound: direct
-    - domain_suffix:
-        - note.com
-        # - puzsq.logicpuzzle.app
-      outbound: jp-out
-    - rule_set: geosite-google
-      outbound: us-out
     - rule_set: geosite-github
       outbound: proxy-out
-    - domain_suffix:
-        - atcoder.jp
-        - syncthing.net
-      outbound: direct
+    {% block custom_route_rules %}{% endblock %}
     - rule_set:
         - geosite-adobe-activation
         - geosite-apple
