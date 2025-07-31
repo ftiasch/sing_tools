@@ -71,6 +71,10 @@ route:
       action: reject
     - port: 123
       outbound: direct
+    - port: 11010
+      outbound: direct
+    - port: 11011
+      outbound: direct
     - rule_set: geosite-github
       outbound: proxy-out
     {% block custom_route_rules %}{% endblock %}
