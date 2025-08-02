@@ -1,4 +1,4 @@
-db-path: ./db.json
+db_path: ./db.json
 
 timeout: 10
 paramiko:
@@ -9,7 +9,6 @@ providers:
   dg: https://no3-svip.urlapi-dodo.sbs/s?t=92094d610830a76a2b05317cfa9137d7
 hosts:
   base: &base
-    extra-outbounds: []
     type: sing
     sudo: false
   camp-pk:
@@ -26,4 +25,4 @@ hosts:
     outbounds:
       - ok
 
-github-proxy: https://ghfast.top/
+github_proxy: https://ghfast.top/

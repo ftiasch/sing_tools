@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import os
 import re
 from typing import Annotated
 from urllib.parse import parse_qs, unquote, urlparse
@@ -8,7 +9,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 import paramiko
 import typer
 import yaml
-from jinja2 import Environment, FileSystemLoader
+from pydantic import BaseModel, Field
 
 # Configure logging
 logging.basicConfig(
@@ -16,9 +17,28 @@ logging.basicConfig(
 )
 
 # Precompile regex pattern for Japan variants
-JP_PATTERN = re.compile(r"(JP|japan|🇯🇵|日本)", re.IGNORECASE)
-RU_PATTERN = re.compile(r"(RU|russia|🇷🇺)", re.IGNORECASE)
-US_PATTERN = re.compile(r"(US|United States|🇺🇸)", re.IGNORECASE)
+HK_PATTERN = re.compile(r"(HK|Hong Kong|��)", re.IGNORECASE)
+JP_PATTERN = re.compile(r"(JP|japan|��|日本)", re.IGNORECASE)
+RU_PATTERN = re.compile(r"(RU|russia|��🇺)", re.IGNORECASE)
+US_PATTERN = re.compile(r"(US|United States|��)", re.IGNORECASE)
+
+
+class ParamikoConfig(BaseModel):
+    host: str
+
+
+class HostConfig(BaseModel):
+    outbounds: list[str] = Field(default_factory=list)
+    sudo: bool = False
+
+
+class Config(BaseModel):
+    db_path: str
+    timeout: int
+    github_proxy: str = ""
+    paramiko: ParamikoConfig
+    providers: dict[str, str]
+    hosts: dict[str, HostConfig]
 
 
 class FileUtils:
@@ -28,21 +48,31 @@ class FileUtils:
             return yaml.safe_load(f)
 
     @staticmethod
-    def _load_db(config):
+    def _load_db(config: Config):
         try:
-            with open(config["db-path"], "r") as f:
+            with open(config.db_path, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
             return {}
 
     @staticmethod
-    def _save_db(config, db):
-        with open(config["db-path"], "w") as f:
+    def _save_db(config: Config, db):
+        with open(config.db_path, "w") as f:
             json.dump(db, f)
 
 
 def b64decode(b):
     return base64.urlsafe_b64decode(b + "=" * (-len(b) % 4)).decode("utf-8")
+
+
+def dict_merge(g, h):
+    f = g.copy()
+    for key, value in h.items():
+        if key in f and isinstance(value, dict):
+            f[key] = dict_merge(f[key], value)
+        else:
+            f[key] = value
+    return f
 
 
 SING_DIAL = {
@@ -268,6 +298,8 @@ class ProxyGrouper:
             if RU_PATTERN.search(name):
                 continue
             self.__add("proxy-out", name)
+            if HK_PATTERN.search(name):
+                self.__add("hk-out", name)
             if JP_PATTERN.search(name):
                 self.__add("jp-out", name)
             if US_PATTERN.search(name):
@@ -279,81 +311,104 @@ class ProxyGrouper:
         self.groups[group].append(name)
 
 
+def _normalize_rule_set(maybe_rule_set: str | list[str] | None) -> list[str]:
+    if maybe_rule_set is None:
+        return []
+    if isinstance(maybe_rule_set, str):
+        return [maybe_rule_set]
+    return maybe_rule_set
+
+
+def _combine_rules(config):
+    # concat before_rules && rules && after_rules
+    config["rules"] = (
+        config.get("before_rules", [])
+        + config.get("rules", [])
+        + config.get("after_rules", [])
+    )
+    if "before_rules" in config:
+        del config["before_rules"]
+    if "after_rules" in config:
+        del config["after_rules"]
+
+
 def _generate(host):
     logging.info("[sing_tools]")
-    config = FileUtils._load_yaml_file("config.yaml")
-    host_config = config["hosts"][host]
+    config_dict = FileUtils._load_yaml_file("config.yaml")
+    config = Config(**config_dict)
+    host_config = config.hosts[host]
+    assert host_config is not None, f"Host '{host}' not found in config"
     db = FileUtils._load_db(config)
     outbounds = []
-    for name in host_config["outbounds"]:
-        sing_config = db["providers"][name]
+    for name in host_config.outbounds:
+        output = db["providers"][name]
         logging.info("%s: Parsing proxies...", name)
-        for o in ShareLink.parse(name, sing_config[-1]):
+        for o in ShareLink.parse(name, output[-1]):
             if name == "ww" and o.mihomo["type"] == "ssr":
                 continue
             outbounds.append(o)
 
-    proxy_type = host_config["type"]
-    if proxy_type not in ("mihomo", "sing"):
-        raise ValueError(f"Unsupported proxy type: {proxy_type}")
     names, proxies = {}, []
     for o in outbounds:
         n = o.name
         count = names[n] = names.get(n, 0) + 1
         if count > 1:
             n += "#" + str(count - 1)
-        proxies.append(o.get_named_config(n, proxy_type))
+        proxies.append(o.get_named_config(n, "sing"))
+
     proxy_groups = ProxyGrouper(proxies).groups
-    env = Environment(loader=FileSystemLoader("templates"))
-    env.filters.update({"toyaml": lambda d: yaml.dump(d, allow_unicode=True).strip()})
-    github_proxy = config.get("github-proxy", "")
-    yaml_str = env.get_template(f"{host}.yaml").render(
-        github_proxy=github_proxy,
-        proxies=proxies,
-        proxy_groups=proxy_groups,
+    github_proxy = config.github_proxy
+    output = FileUtils._load_yaml_file("templates/base.yaml")
+    output = dict_merge(
+        output, FileUtils._load_yaml_file(os.path.join("templates", f"{host}.yaml"))
     )
-    match proxy_type:
-        case "mihomo":
-            return yaml_str
-        case "sing":
-            # sing post process
-            sing_config = yaml.safe_load(yaml_str)
-            # remove rules against invalid outbounds
-            sing_config["route"]["rules"] = [
-                rule
-                for rule in sing_config["route"]["rules"]
-                if rule.get("outbound", None) is None
-                or rule["outbound"] == "direct"
-                or rule["outbound"] in proxy_groups
-            ]
-            # add rule sets
-            rule_sets = set()
-            for rules in (sing_config["dns"]["rules"], sing_config["route"]["rules"]):
-                for rule in rules:
-                    used_rule_set = rule.get("rule_set", None)
-                    if used_rule_set is not None:
-                        if isinstance(used_rule_set, str):
-                            rule_sets.add(used_rule_set)
-                        else:
-                            for urs in used_rule_set:
-                                rule_sets.add(urs)
-            for rule_set in rule_sets:
-                if rule_set.startswith("geoip"):
-                    url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{rule_set}.srs"
-                else:
-                    url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{rule_set}.srs"
-                sing_config["route"]["rule_set"].append(
-                    {
-                        "download_detour": "direct",
-                        "format": "binary",
-                        "tag": rule_set,
-                        "type": "remote",
-                        "update_interval": "1d",
-                        "url": github_proxy + url,
-                    }
-                )
-                pass
-            return json.dumps(sing_config, ensure_ascii=False, indent=2)
+
+    # add proxy_groups & proxies
+    proxy_group_template = FileUtils._load_yaml_file("templates/proxy_group.yaml")
+    for group_name, outbounds in proxy_groups.items():
+        group_config = proxy_group_template.copy()
+        group_config["tag"] = group_name
+        group_config["outbounds"] = outbounds
+        output["outbounds"].append(group_config)
+    output["outbounds"].extend(proxies)
+
+    _combine_rules(output["dns"])
+    _combine_rules(output["route"])
+
+    # postprocess: remove rules against invalid outbounds
+    output["route"]["rules"] = [
+        rule
+        for rule in output["route"]["rules"]
+        if rule.get("outbound", None) is None
+        or rule["outbound"] == "direct"
+        or rule["outbound"] in proxy_groups
+    ]
+
+    # postprocess: rule sets
+    rule_sets = set()
+    for rules in (output["dns"]["rules"], output["route"]["rules"]):
+        for rule in rules:
+            for urs in _normalize_rule_set(rule.get("rule_set", None)):
+                rule_sets.add(urs)
+            for sub_rule in rule.get("rules", []):
+                for urs in _normalize_rule_set(sub_rule.get("rule_set", None)):
+                    rule_sets.add(urs)
+    for rule_set in rule_sets:
+        if rule_set.startswith("geoip"):
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/{rule_set}.srs"
+        else:
+            url = f"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/{rule_set}.srs"
+        output["route"]["rule_set"].append(
+            {
+                "download_detour": "direct",
+                "format": "binary",
+                "tag": rule_set,
+                "type": "remote",
+                "update_interval": "1d",
+                "url": github_proxy + url,
+            }
+        )
+    return json.dumps(output, ensure_ascii=False, indent=2)
 
 
 @app.command()

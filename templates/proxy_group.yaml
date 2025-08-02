@@ -1,0 +1,5 @@
+type: urltest
+interrupt_exist_connections: false
+interval: 30s
+tolerance: 50
+url: https://cp.cloudflare.com/generate_204

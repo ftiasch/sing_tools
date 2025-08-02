@@ -1,15 +1,14 @@
-{% extends "_base.sing.yaml" %}
-
-{% block custom_route_rules %}
-    - domain_suffix:
-        - note.com
-        # - puzsq.logicpuzzle.app
-      outbound: jp-out
-    - rule_set: geosite-google
-      outbound: us-out
-    - domain_suffix:
-        - atcoder.jp
-        - syncthing.net
-      outbound: direct
-{% endblock %}
+{}
+# {% block custom_route_rules %}
+#     - domain_suffix:
+#         - note.com
+#         # - puzsq.logicpuzzle.app
+#       outbound: jp-out
+#     - rule_set: geosite-google
+#       outbound: us-out
+#     - domain_suffix:
+#         - atcoder.jp
+#         - syncthing.net
+#       outbound: direct
+# {% endblock %}
 

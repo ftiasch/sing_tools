@@ -23,15 +23,10 @@ dns:
       address: rcode://refused
     - tag: dns_fakeip
       address: fakeip
-  rules:
+  before_rules:
     - outbound: any
       server: dns_resolver
-    - domain_suffix:
-        - note.com
-        - zerion.io
-      server: dns_proxy
-    - rule_set: geosite-github
-      server: dns_proxy
+  after_rules:
     - rule_set: geosite-geolocation-!cn
       query_type:
         - A
@@ -57,7 +52,7 @@ dns:
     inet6_range: fc00::/18
 route:
   rule_set: []
-  rules:
+  before_rules:
     - inbound: tun-in
       action: sniff
     - protocol: dns
@@ -81,7 +76,7 @@ route:
       outbound: direct
     - rule_set: geosite-github
       outbound: proxy-out
-    {% block custom_route_rules %}{% endblock %}
+  after_rules:
     - rule_set:
         - geosite-adobe-activation
         - geosite-apple
@@ -116,17 +111,6 @@ inbounds:
 outbounds:
   - type: direct
     tag: direct
-  {% for group_name, group_proxies in proxy_groups.items() %}
-  - type: urltest
-    tag: {{ group_name }}
-    outbounds:
-{{ group_proxies | toyaml | indent(6, true) }}
-    interrupt_exist_connections: false
-    interval: 30s
-    tolerance: 50
-    url: https://cp.cloudflare.com/generate_204
-  {% endfor %}
-{{ proxies | toyaml | indent(2, true) }}
 experimental:
   cache_file:
     enabled: true
