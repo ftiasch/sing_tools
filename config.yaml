@@ -20,10 +20,10 @@ hosts:
   marf-bj:
     <<: *base
     outbounds:
-      - ok
+      - dg
   marf-sh:
     <<: *base
     outbounds:
-      - dg
+      - ok
 
 github-proxy: https://ghfast.top/

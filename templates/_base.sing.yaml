@@ -71,9 +71,13 @@ route:
       action: reject
     - port: 123
       outbound: direct
+    - port: 3478 # stun
+      outbound: direct
     - port: 11010
       outbound: direct
     - port: 11011
+      outbound: direct
+    - port: 22000 # syncthing
       outbound: direct
     - rule_set: geosite-github
       outbound: proxy-out
