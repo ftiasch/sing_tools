@@ -26,6 +26,10 @@ dns:
   before_rules:
     - outbound: any
       server: dns_resolver
+    - rule_set: geosite-category-ads-all
+      server: dns_refused
+      action: route-options
+      disable_cache: true
   after_rules:
     - rule_set: geosite-geolocation-!cn
       query_type:
