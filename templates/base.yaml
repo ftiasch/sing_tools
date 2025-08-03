@@ -68,6 +68,8 @@ route:
     - port: 443
       network: udp
       action: reject
+    - ip_is_private: true
+      outbound: direct
     - port: 123
       outbound: direct
     - port: 3478 # stun
@@ -91,8 +93,6 @@ route:
     - rule_set:
         - geoip-cn
         - geosite-cn
-      outbound: direct
-    - ip_is_private: true
       outbound: direct
   final: proxy-out
   auto_detect_interface: true

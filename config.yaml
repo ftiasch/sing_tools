@@ -14,12 +14,12 @@ hosts:
   camp-pk:
     <<: *base
     outbounds:
-      - dg
+      - ok
     sudo: true
   marf-bj:
     <<: *base
     outbounds:
-      - dg
+      - ok
   marf-sh:
     <<: *base
     outbounds:

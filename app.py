@@ -263,20 +263,22 @@ app = typer.Typer()
 
 @app.command()
 def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
-    config = FileUtils._load_yaml_file("config.yaml")
+    config_dict = FileUtils._load_yaml_file("config.yaml")
+    config = Config(**config_dict)
+    print(config)
     db = FileUtils._load_db(config)
     if "providers" not in db:
         db["providers"] = {}
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
-    ssh.connect(config["paramiko"]["host"])
+    ssh.connect(config.paramiko.host)
     provider_pattern = re.compile(provider_selector)
     try:
-        for name, url in config["providers"].items():
+        for name, url in config.providers.items():
             if not provider_pattern.match(name):
                 continue
             logging.info("%s: Downloading...", name)
-            _, stdout, _ = ssh.exec_command(f"curl -4 -m {config['timeout']} '{url}'")
+            _, stdout, _ = ssh.exec_command(f"curl -4 -m {config.timeout} '{url}'")
             stdout = stdout.read().decode("utf-8")
             if stdout:
                 db["providers"][name] = db["providers"].get(name, []) + [stdout]
