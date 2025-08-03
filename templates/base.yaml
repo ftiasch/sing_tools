@@ -31,23 +31,33 @@ dns:
       action: route-options
       disable_cache: true
   after_rules:
-    - rule_set: geosite-geolocation-!cn
-      query_type:
-        - A
-        - AAAA
-      server: dns_fakeip
-    - rule_set: geosite-geolocation-!cn
-      query_type:
-        - CNAME
+    - rule_set: geosite-geolocation-cn
+      server: dns_direct
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geoip-cn
+        - rule_set: geosite-geolocation-!cn
+          invert: true
       server: dns_proxy
-    - query_type:
-        - A
-        - AAAA
-        - CNAME
-      invert: true
-      server: dns_refused
-      action: route-options
-      disable_cache: true
+      client_subnet: 223.5.5.5/24
+    # - rule_set: geosite-geolocation-!cn
+    #   query_type:
+    #     - A
+    #     - AAAA
+    #   server: dns_fakeip
+    # - rule_set: geosite-geolocation-!cn
+    #   query_type:
+    #     - CNAME
+    #   server: dns_proxy
+    # - query_type:
+    #     - A
+    #     - AAAA
+    #     - CNAME
+    #   invert: true
+    #   server: dns_refused
+    #   action: route-options
+    #   disable_cache: true
   final: dns_direct
   independent_cache: true
   fakeip:
@@ -62,37 +72,42 @@ route:
     - protocol: dns
       ip_cidr: 223.5.5.5
       action: hijack-dns
-    - port: 853
-      network: tcp
-      action: reject
-    - port: 443
-      network: udp
-      action: reject
-    - ip_is_private: true
+    - type: logical
+      mode: or
+      rules:
+        - port: 853
+          network: tcp
+        - port: 443
+          network: udp
+        - ip_is_private: true
+        - port: 123 # NTP
+        - port: 3478 # stun
+        - port: 11010 # easytier
+        - port: 11011 # easytier
+        - port: 22000 # syncthing
       outbound: direct
-    - port: 123
-      outbound: direct
-    - port: 3478 # stun
-      outbound: direct
-    - port: 11010
-      outbound: direct
-    - port: 11011
-      outbound: direct
-    - port: 22000 # syncthing
-      outbound: direct
-    - rule_set: geosite-github
-      outbound: proxy-out
+    # - rule_set: geosite-github
+    #   outbound: proxy-out
   after_rules:
-    - rule_set:
-        - geosite-adobe-activation
-        - geosite-apple
-        - geosite-microsoft
+    # - rule_set:
+    #     - geosite-adobe-activation
+    #     - geosite-apple
+    #     - geosite-microsoft
+    #   outbound: direct
+    # - rule_set: geosite-geolocation-!cn
+    #   outbound: proxy-out
+    # - rule_set:
+    #     - geoip-cn
+    #     - geosite-cn
+    #   outbound: direct
+    - rule_set: geosite-geolocation-cn
       outbound: direct
-    - rule_set: geosite-geolocation-!cn
-      outbound: proxy-out
-    - rule_set:
-        - geoip-cn
-        - geosite-cn
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geoip-cn
+        - rule_set: geosite-geolocation-!cn
+          invert: true
       outbound: direct
   final: proxy-out
   auto_detect_interface: true
