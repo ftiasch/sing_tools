@@ -16,6 +16,12 @@ hosts:
     outbounds:
       - ok
     sudo: true
+  camp-bb:
+    <<: *base
+    outbounds:
+      - ok
+    ssh_user: root
+    sudo: true
   marf-bj:
     <<: *base
     outbounds:
