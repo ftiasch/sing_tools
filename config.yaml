@@ -22,10 +22,10 @@ hosts:
       - ok
     ssh_user: root
     sudo: true
-  marf-bj:
-    <<: *base
-    outbounds:
-      - ok
+  # marf-bj:
+  #   <<: *base
+  #   outbounds:
+  #     - ok
   marf-sh:
     <<: *base
     outbounds:
