@@ -20,7 +20,7 @@ logging.basicConfig(
 HK_PATTERN = re.compile(r"(HK|Hong Kong|��)", re.IGNORECASE)
 JP_PATTERN = re.compile(r"(JP|japan|��|日本)", re.IGNORECASE)
 RU_PATTERN = re.compile(r"(RU|russia|��🇺)", re.IGNORECASE)
-US_PATTERN = re.compile(r"(US|United States|��)", re.IGNORECASE)
+US_PATTERN = re.compile(r"(US|United\w*States|🇺🇸)", re.IGNORECASE)
 
 
 class ParamikoConfig(BaseModel):

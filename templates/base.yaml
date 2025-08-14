@@ -1,11 +1,11 @@
 log:
-  level: error
+  level: warn
   # output: box.log
   timestamp: true
 dns:
   servers:
     - tag: dns_proxy
-      address: tcp://1.1.1.1
+      address: https://dns.google/dns-query
       address_resolver: dns_resolver
       strategy: ipv4_only
       detour: proxy-out
@@ -31,25 +31,31 @@ dns:
       action: route-options
       disable_cache: true
   after_rules:
-    - rule_set: geosite-geolocation-!cn
-      query_type:
-        - A
-        - AAAA
-      server: dns_fakeip
-    - rule_set: geosite-geolocation-!cn
-      query_type:
-        - CNAME
+    - rule_set:
+        - geosite-geolocation-cn
+      server: dns_direct
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geosite-geolocation-!cn
+          invert: true
+        - rule_set: geoip-cn
+      server: dns_direct
+    - domain_suffix:
+        - limao.tech
+        - ftiasch.xyz
+      server: dns_direct
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geosite-geolocation-!cn
+          invert: true
+        - ip_is_private: true
       server: dns_proxy
-    - query_type:
-        - A
-        - AAAA
-        - CNAME
-      invert: true
-      server: dns_refused
-      action: route-options
-      disable_cache: true
-  final: dns_direct
-  independent_cache: true
+      client_subnet: 223.5.5.5/24
+  final: dns_proxy
+  independent_cache: false
+  cache_capacity: 1048576
   fakeip:
     enabled: true
     inet4_range: 198.18.0.0/15
@@ -62,37 +68,41 @@ route:
     - protocol: dns
       ip_cidr: 223.5.5.5
       action: hijack-dns
-    - port: 853
-      network: tcp
-      action: reject
-    - port: 443
-      network: udp
-      action: reject
+    - rule_set: geoip-cn
+      outbound: direct
     - ip_is_private: true
       outbound: direct
-    - port: 123
+    - rule_set: geosite-geolocation-cn
       outbound: direct
-    - port: 3478 # stun
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geosite-geolocation-!cn
+          invert: true
+        - rule_set: geoip-cn
       outbound: direct
-    - port: 11010
-      outbound: direct
-    - port: 11011
-      outbound: direct
-    - port: 22000 # syncthing
-      outbound: direct
-    - rule_set: geosite-github
-      outbound: proxy-out
+    # - rule_set:
+    #     - geosite-adobe@cn
+    #     - geosite-apple@cn
+    #     - geosite-category-games-cn
+    #     - geosite-microsoft@cn
+    #   outbound: direct
   after_rules:
-    - rule_set:
-        - geosite-adobe-activation
-        - geosite-apple
-        - geosite-microsoft
-      outbound: direct
-    - rule_set: geosite-geolocation-!cn
-      outbound: proxy-out
-    - rule_set:
-        - geoip-cn
-        - geosite-cn
+    # - port: 853
+    #   network: tcp
+    #   outbound: direct
+    # - port: 443
+    #   network: udp
+    #   outbound: direct
+    # - port: 123 # NTP
+    #   outbound: direct
+    # - port: 3478 # stun
+    #   outbound: direct
+    # - port: 11010 # easytier
+    #   outbound: direct
+    # - port: 11011 # easytier
+    #   outbound: direct
+    - port: 22000 # syncthing
       outbound: direct
   final: proxy-out
   auto_detect_interface: true
@@ -122,4 +132,10 @@ experimental:
     store_fakeip: true
     store_rdrc: true
   clash_api:
-    external_controller: 0.0.0.0:9091
+    external_controller: 0.0.0.0:9090
+    access_control_allow_origin:
+      - http://127.0.0.1
+      - https://metacubexd.pages.dev
+      - https://yacd.haishan.me
+    access_control_allow_private_network: true
+
