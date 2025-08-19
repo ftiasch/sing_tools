@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Sing Tools deployment daily at 4 AM
+Requires=sing-tools.service
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

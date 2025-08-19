@@ -1,0 +1,12 @@
+[Unit]
+Description=Sing Tools Deployment Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/ftiasch/sing_tools/run.sh
+WorkingDirectory=/home/ftiasch/sing_tools
+Environment=HEALTHCHECKS_URL=
+StandardOutput=journal
+StandardError=journal
