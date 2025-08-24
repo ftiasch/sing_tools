@@ -5,28 +5,16 @@ log:
 dns:
   servers:
     - tag: dns_proxy
-      address: https://dns.google/dns-query
-      address_resolver: dns_resolver
-      strategy: ipv4_only
+      type: tls
+      server: 8.8.8.8
+      # strategy: ipv4_only # TODO
       detour: proxy-out
     - tag: dns_direct
-      address: tls://223.5.5.5
-      # address_resolver: dns_resolver
-      strategy: ipv4_only
-      detour: direct
-    - tag: dns_resolver
-      address: 223.5.5.5
-      strategy: ipv4_only
-      detour: direct
-    - tag: dns_success
-      address: rcode://success
-    - tag: dns_refused
-      address: rcode://refused
-    - tag: dns_fakeip
-      address: fakeip
+      type: tls
+      server: 223.5.5.5
+      # strategy: ipv4_only TODO
+      # detour: direct
   before_rules:
-    - outbound: any
-      server: dns_resolver
     - rule_set: geosite-category-ads-all
       server: dns_refused
       action: route-options
@@ -55,13 +43,13 @@ dns:
       server: dns_proxy
       client_subnet: 223.5.5.5/24
   final: dns_proxy
+  strategy: ipv4_only
   independent_cache: false
   cache_capacity: 1048576
-  fakeip:
-    enabled: true
-    inet4_range: 198.18.0.0/15
-    inet6_range: fc00::/18
 route:
+  default_domain_resolver:
+    server: dns_direct
+    strategy: ipv4_only
   rule_set: []
   before_rules:
     - inbound: tun-in
@@ -130,7 +118,6 @@ experimental:
   cache_file:
     enabled: true
     path: cache.db
-    store_fakeip: true
     store_rdrc: true
   clash_api:
     external_controller: 0.0.0.0:9090
