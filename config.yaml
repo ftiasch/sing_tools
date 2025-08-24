@@ -21,7 +21,11 @@ hosts:
     outbounds:
       - dg
     ssh_user: root
-    sudo: true
+  camp-box:
+    <<: *base
+    outbounds:
+      - dg
+    ssh_user: root
   # marf-bj:
   #   <<: *base
   #   outbounds:
