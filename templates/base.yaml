@@ -14,12 +14,16 @@ dns:
       server: 223.5.5.5
       # strategy: ipv4_only TODO
       # detour: direct
-  before_rules:
-    - rule_set: geosite-category-ads-all
-      server: dns_refused
-      action: route-options
-      disable_cache: true
+  # before_rules:
+  #   - rule_set: geosite-category-ads-all
+  #     server: dns_refused
+  #     action: route-options
+  #     disable_cache: true
   after_rules:
+    - domain_suffix:
+        - limao.tech
+        - ftiasch.xyz
+      server: dns_direct
     - rule_set:
         - geosite-geolocation-cn
       server: dns_direct
@@ -29,10 +33,6 @@ dns:
         - rule_set: geosite-geolocation-!cn
           invert: true
         - rule_set: geoip-cn
-      server: dns_direct
-    - domain_suffix:
-        - limao.tech
-        - ftiasch.xyz
       server: dns_direct
     - type: logical
       mode: and
@@ -70,12 +70,13 @@ route:
           invert: true
         - rule_set: geoip-cn
       outbound: direct
-    # - rule_set:
-    #     - geosite-adobe@cn
-    #     - geosite-apple@cn
-    #     - geosite-category-games-cn
-    #     - geosite-microsoft@cn
-    #   outbound: direct
+    - rule_set:
+        - geosite-adobe-activation
+        - geosite-adobe@cn
+        - geosite-apple@cn
+        - geosite-category-games-cn
+        - geosite-microsoft@cn
+      outbound: direct
   after_rules:
     # - port: 853
     #   network: tcp
@@ -87,10 +88,10 @@ route:
     #   outbound: direct
     # - port: 3478 # stun
     #   outbound: direct
-    # - port: 11010 # easytier
-    #   outbound: direct
-    # - port: 11011 # easytier
-    #   outbound: direct
+    - port: 11010 # easytier
+      outbound: direct
+    - port: 11011 # easytier
+      outbound: direct
     - port: 22000 # syncthing
       outbound: direct
   final: proxy-out
