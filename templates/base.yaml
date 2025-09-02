@@ -7,13 +7,10 @@ dns:
     - tag: dns_proxy
       type: tls
       server: 8.8.8.8
-      # strategy: ipv4_only # TODO
       detour: proxy-out
     - tag: dns_direct
       type: tls
       server: 223.5.5.5
-      # strategy: ipv4_only TODO
-      # detour: direct
   # before_rules:
   #   - rule_set: geosite-category-ads-all
   #     server: dns_refused
@@ -71,12 +68,18 @@ route:
         - rule_set: geoip-cn
       outbound: direct
     - rule_set:
-        - geosite-adobe-activation
-        - geosite-adobe@cn
         - geosite-apple@cn
+        - geosite-category-game-platforms-download
         - geosite-category-games-cn
         - geosite-microsoft@cn
+        - geosite-steam@cn
       outbound: direct
+    - rule_set:
+        - geosite-google-deepmind
+      outbound: us-out
+    - rule_set:
+        - geosite-adobe
+      outbound: hk-out
   after_rules:
     # - port: 853
     #   network: tcp
