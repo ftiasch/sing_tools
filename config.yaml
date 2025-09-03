@@ -19,7 +19,7 @@ hosts:
   camp-bb:
     <<: *base
     outbounds:
-      - dg
+      - ok
     ssh_user: root
   camp-box:
     <<: *base

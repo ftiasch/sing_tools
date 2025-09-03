@@ -12,9 +12,10 @@ dns:
       type: tls
       server: 223.5.5.5
   # before_rules:
-  #   - rule_set: geosite-category-ads-all
-  #     server: dns_refused
-  #     action: route-options
+  #   - query_type:
+  #       - AAAA
+  #     action: reject
+  #     method: default
   #     disable_cache: true
   after_rules:
     - domain_suffix:
