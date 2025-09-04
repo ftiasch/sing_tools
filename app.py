@@ -23,6 +23,20 @@ RU_PATTERN = re.compile(r"(RU|russia|��🇺)", re.IGNORECASE)
 US_PATTERN = re.compile(r"(US|United\w*States|🇺🇸)", re.IGNORECASE)
 
 
+def parse_server_port(server_port: str) -> tuple[str, str]:
+    """Parse server and port from server_port string, handling both IPv4 and IPv6 addresses."""
+    # Handle IPv6 addresses (enclosed in brackets) and IPv4 addresses
+    if server_port.startswith("[") and "]:" in server_port:
+        # IPv6 address format: [IPv6]:port
+        server_end = server_port.index("]:")
+        server = server_port[1:server_end]
+        port = server_port[server_end + 2:]
+    else:
+        # IPv4 address format: server:port
+        server, port = server_port.split(":", 1)
+    return server, port
+
+
 class ParamikoConfig(BaseModel):
     host: str
 
@@ -107,7 +121,7 @@ class Outbound:
                 if ":" not in decoded_method_password:
                     raise ValueError("Invalid SS URL format")
                 method, password = decoded_method_password.split(":", 1)
-                server, port = server_port.split(":")
+                server, port = parse_server_port(server_port)
                 self.__name = unquote(parsed_url.fragment, encoding="utf-8")
                 self.mihomo = {
                     "type": "ss",
@@ -155,7 +169,7 @@ class Outbound:
                 if len(parts) != 2:
                     raise ValueError("Invalid Trojan URL format")
                 password, server_port = parts
-                server, port = server_port.split(":")
+                server, port = parse_server_port(server_port)
                 qs = parse_qs(parsed_url.query)
                 sni = qs.get("peer", [""])[0]
                 skip_cert_verify = qs.get("allowInsecure", [False])[0] == "1"
@@ -186,7 +200,7 @@ class Outbound:
                 if len(parts) != 2:
                     raise ValueError("Invalid VLESS URL format")
                 uuid, server_port = parts
-                server, port = server_port.split(":")
+                server, port = parse_server_port(server_port)
                 qs = parse_qs(parsed_url.query)
                 security = qs.get("security", ["none"])[0]
                 sni = qs.get("sni", [""])[0]
