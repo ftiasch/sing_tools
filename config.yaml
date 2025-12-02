@@ -27,7 +27,7 @@ hosts:
   camp-box:
     <<: *base
     outbounds:
-      - ok
+      - dg
     ssh_user: root
   # marf-bj:
   #   <<: *base
