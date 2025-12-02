@@ -102,6 +102,45 @@ SING_DIAL = {
 }
 
 
+class SimpleOutbound:
+    """Simple outbound class for storing sing-box configurations as-is"""
+
+    def __init__(self, provider: str, config: dict):
+        self.provider = provider
+        config = config.copy()  # Don't modify the original
+
+        # Normalize server_port to be an integer (uint16 compatible)
+        if "server_port" in config:
+            try:
+                server_port = config["server_port"]
+                if isinstance(server_port, str):
+                    config["server_port"] = int(server_port)
+                elif isinstance(server_port, (int, float)):
+                    config["server_port"] = int(server_port)
+                # If it's already an int, leave it as is
+            except (ValueError, TypeError):
+                logging.warning(
+                    f"Invalid server_port value: {config['server_port']}, keeping original"
+                )
+
+        self.config = config
+
+    @property
+    def name(self) -> str:
+        """Get the name/tag from the config"""
+        tag = self.config.get("tag", "")
+        return f"[{self.provider}] {tag}" if tag else f"[{self.provider}] unnamed"
+
+    def get_named_config(self, name: str, proxy_type: str) -> dict:
+        """Get the configuration with a custom name and type (ducktyping compatible with Outbound)"""
+        if proxy_type == "sing":
+            config = self.config.copy()
+            config["tag"] = name
+            return config
+        else:
+            raise ValueError(f"Unsupported proxy type: {proxy_type}")
+
+
 class Outbound:
     __provider: str
     __name: str
@@ -263,19 +302,71 @@ class Outbound:
             raise ValueError(f"Unsupported proxy type: {proxy_type}")
 
 
-class ShareLink:
+class Subscription:
     @staticmethod
     def parse(name, data):
+        # Try to parse as JSON first (sing-box configuration)
+        try:
+            config_data = json.loads(data)
+            if isinstance(config_data, dict) and "outbounds" in config_data:
+                logging.info("%s: Detected sing-box configuration", name)
+                yield from Subscription._parse_singbox_config(name, config_data)
+                return
+        except (json.JSONDecodeError, KeyError):
+            # Not a valid JSON or doesn't have outbounds, treat as traditional subscription
+            pass
+
+        # Handle as base64-encoded traditional subscription
         try:
             decoded_data = b64decode(data)
         except ValueError:
             logging.error("%s: Error decoding base64", name)
+            return
+
         for config in decoded_data.splitlines():
             logging.info("%s: Parsing outbound %s...", name, config)
             try:
                 yield Outbound(name, config)
             except Exception:
                 logging.exception("%s: Error parsing %s", name, config)
+
+    @staticmethod
+    def _parse_singbox_config(name, config_data):
+        """Parse sing-box configuration and filter outbounds"""
+        outbounds = config_data.get("outbounds", [])
+
+        # Filter out unwanted outbound types
+        filtered_outbounds = []
+        for outbound in outbounds:
+            outbound_type = outbound.get("type", "").lower()
+            tag = outbound.get("tag", "")
+
+            # Skip unwanted outbound types
+            if outbound_type in ["direct", "block", "dns", "selector", "urltest"]:
+                logging.info(
+                    "%s: Skipping %s outbound (type: %s)", name, tag, outbound_type
+                )
+                continue
+
+            filtered_outbounds.append(outbound)
+
+        logging.info(
+            "%s: Found %d valid outbounds from sing-box config",
+            name,
+            len(filtered_outbounds),
+        )
+
+        # Create SimpleOutbound objects for each valid outbound
+        for outbound in filtered_outbounds:
+            try:
+                yield SimpleOutbound(name, outbound)
+            except Exception as e:
+                logging.exception(
+                    "%s: Error creating SimpleOutbound for %s: %s",
+                    name,
+                    outbound.get("tag", "unknown"),
+                    e,
+                )
 
 
 app = typer.Typer()
@@ -369,9 +460,8 @@ def _generate(host):
     for name in host_config.outbounds:
         output = db["providers"][name]
         logging.info("%s: Parsing proxies...", name)
-        for o in ShareLink.parse(name, output[-1]):
-            if name == "ww" and o.mihomo["type"] == "ssr":
-                continue
+        for o in Subscription.parse(name, output[-1]):
+            # Handle both Outbound and SimpleOutbound types
             outbounds.append(o)
 
     names, proxies = {}, []
@@ -380,6 +470,8 @@ def _generate(host):
         count = names[n] = names.get(n, 0) + 1
         if count > 1:
             n += "#" + str(count - 1)
+
+        # Both Outbound and SimpleOutbound have get_named_config method (ducktyping)
         proxies.append(o.get_named_config(n, "sing"))
 
     proxy_groups = ProxyGrouper(proxies).groups
