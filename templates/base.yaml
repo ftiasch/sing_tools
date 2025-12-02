@@ -68,6 +68,9 @@ route:
           invert: true
         - rule_set: geoip-cn
       outbound: direct
+    - domain_suffix:
+        - codeforces.com
+      outbound: direct
     - rule_set:
         - geosite-apple@cn
         - geosite-category-game-platforms-download
