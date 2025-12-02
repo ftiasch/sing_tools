@@ -4,9 +4,12 @@ timeout: 10
 paramiko:
   host: cn-relay.internet.limao.tech
 providers:
-  ok: https://rss.ccgfw.top/link/C7glPw7oQlPThsUV?mu=2
-  ww: https://ww5271.xyz/rss/mEWrAf3/Ed_KYV?net_type=ALL
-  dg: https://d400nmx5b83.cdn-tencent.sbs/s?t=92094d610830a76a2b05317cfa9137d7
+  ok: 
+    url: https://rss.ccgfw.top/link/C7glPw7oQlPThsUV?mu=2
+  # ww: https://ww5271.xyz/rss/mEWrAf3/Ed_KYV?net_type=ALL
+  dg: 
+    url: https://debd2b040ac35e3787b27bfdcc5b6db1.img-cache-oss-cn-tokyo-aliyuncs-storage.com/s?t=debd2b040ac35e3787b27bfdcc5b6db1.jpg
+    ua: sing-box
 hosts:
   base: &base
     type: sing
@@ -24,7 +27,7 @@ hosts:
   camp-box:
     <<: *base
     outbounds:
-      - dg
+      - ok
     ssh_user: root
   # marf-bj:
   #   <<: *base

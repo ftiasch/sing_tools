@@ -30,7 +30,7 @@ def parse_server_port(server_port: str) -> tuple[str, str]:
         # IPv6 address format: [IPv6]:port
         server_end = server_port.index("]:")
         server = server_port[1:server_end]
-        port = server_port[server_end + 2:]
+        port = server_port[server_end + 2 :]
     else:
         # IPv4 address format: server:port
         server, port = server_port.split(":", 1)
@@ -39,6 +39,11 @@ def parse_server_port(server_port: str) -> tuple[str, str]:
 
 class ParamikoConfig(BaseModel):
     host: str
+
+
+class ProviderConfig(BaseModel):
+    url: str
+    ua: str = ""
 
 
 class HostConfig(BaseModel):
@@ -51,7 +56,7 @@ class Config(BaseModel):
     timeout: int
     github_proxy: str = ""
     paramiko: ParamikoConfig
-    providers: dict[str, str]
+    providers: dict[str, ProviderConfig]
     hosts: dict[str, HostConfig]
 
 
@@ -266,6 +271,7 @@ class ShareLink:
         except ValueError:
             logging.error("%s: Error decoding base64", name)
         for config in decoded_data.splitlines():
+            logging.info("%s: Parsing outbound %s...", name, config)
             try:
                 yield Outbound(name, config)
             except Exception:
@@ -288,11 +294,15 @@ def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
     ssh.connect(config.paramiko.host)
     provider_pattern = re.compile(provider_selector)
     try:
-        for name, url in config.providers.items():
+        for name, provider_config in config.providers.items():
             if not provider_pattern.match(name):
                 continue
             logging.info("%s: Downloading...", name)
-            _, stdout, _ = ssh.exec_command(f"curl -4 -m {config.timeout} '{url}'")
+            curl_command = f"curl -4 -m {config.timeout}"
+            if provider_config.ua:
+                curl_command += f" -A '{provider_config.ua}'"
+            curl_command += f" '{provider_config.url}'"
+            _, stdout, _ = ssh.exec_command(curl_command)
             stdout = stdout.read().decode("utf-8")
             if stdout:
                 db["providers"][name] = db["providers"].get(name, []) + [stdout]
