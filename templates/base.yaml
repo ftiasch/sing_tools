@@ -80,6 +80,7 @@ route:
       outbound: direct
     - rule_set:
         - geosite-google-deepmind
+        - geosite-openai
       outbound: us-out
     - rule_set:
         - geosite-adobe
