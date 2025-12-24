@@ -493,14 +493,13 @@ def _generate(host):
     _combine_rules(output["dns"])
     _combine_rules(output["route"])
 
-    # postprocess: remove rules against invalid outbounds
-    output["route"]["rules"] = [
-        rule
-        for rule in output["route"]["rules"]
-        if rule.get("outbound", None) is None
-        or rule["outbound"] == "direct"
-        or rule["outbound"] in proxy_groups
-    ]
+    # postprocess: replace rules against invalid outbounds with reject
+    valid_outbounds = {"direct"} | set(proxy_groups.keys())
+    for rule in output["route"]["rules"]:
+        outbound = rule.get("outbound", None)
+        if outbound is not None and outbound not in valid_outbounds:
+            rule["action"] = "reject"
+            del rule["outbound"]
 
     # postprocess: rule sets
     rule_sets = set()
