@@ -81,7 +81,7 @@ route:
     - rule_set:
         - geosite-google-deepmind
         - geosite-openai
-      outbound: us-out
+      outbound: jp-out
     - rule_set:
         - geosite-adobe
       outbound: hk-out
