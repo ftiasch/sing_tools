@@ -5,10 +5,9 @@ paramiko:
   host: cn-relay.internet.limao.tech
 providers:
   ok: 
-    url: https://rss.ccgfw.top/link/C7glPw7oQlPThsUV?mu=2
-  # ww: https://ww5271.xyz/rss/mEWrAf3/Ed_KYV?net_type=ALL
+    url: https://rss.okgfw.top/link/C7glPw7oQlPThsUV?mu=singbox
   dg: 
-    url: https://debd2b040ac35e3787b27bfdcc5b6db1.img-cache-oss-cn-tokyo-aliyuncs-storage.com/s?t=debd2b040ac35e3787b27bfdcc5b6db1.jpg
+    url: https://8eb7a3b54041484400c88f3c055d8495.static-media-bkt-shanghai-aliyun-ossapi.com/s?t=8eb7a3b54041484400c88f3c055d8495.jpg
     ua: sing-box
 hosts:
   base: &base
@@ -17,7 +16,7 @@ hosts:
   camp-pk:
     <<: *base
     outbounds:
-      - dg
+      - ok
     sudo: true
   camp-bb:
     <<: *base
@@ -27,7 +26,7 @@ hosts:
   camp-box:
     <<: *base
     outbounds:
-      - dg
+      - ok
     ssh_user: root
   # marf-bj:
   #   <<: *base
