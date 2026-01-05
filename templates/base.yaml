@@ -78,6 +78,9 @@ route:
         - geosite-microsoft@cn
         - geosite-steam@cn
       outbound: direct
+    - domain_suffix:
+        - aur.archlinux.org
+      outbound: us-out
     - rule_set:
         - geosite-category-ai-!cn
       outbound: us-out
