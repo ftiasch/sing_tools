@@ -79,9 +79,8 @@ route:
         - geosite-steam@cn
       outbound: direct
     - rule_set:
-        - geosite-google-deepmind
-        - geosite-openai
-      outbound: jp-out
+        - geosite-category-ai-!cn
+      outbound: us-out
     - rule_set:
         - geosite-adobe
       outbound: hk-out
