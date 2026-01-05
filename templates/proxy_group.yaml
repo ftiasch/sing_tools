@@ -1,5 +1,5 @@
 type: urltest
-interrupt_exist_connections: false
-interval: 30s
+interrupt_exist_connections: true
+interval: 60s
 tolerance: 50
-url: https://cp.cloudflare.com/generate_204
+url: https://www.gstatic.com/generate_204
