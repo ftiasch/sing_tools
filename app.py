@@ -144,7 +144,6 @@ class SimpleOutbound:
 class Outbound:
     __provider: str
     __name: str
-    mihomo: dict
     sing: dict
 
     @property
@@ -167,13 +166,6 @@ class Outbound:
                 method, password = decoded_method_password.split(":", 1)
                 server, port = parse_server_port(server_port)
                 self.__name = unquote(parsed_url.fragment, encoding="utf-8")
-                self.mihomo = {
-                    "type": "ss",
-                    "server": server,
-                    "port": int(port),
-                    "method": method,
-                    "password": password,
-                }
                 self.sing = {
                     **SING_DIAL,
                     "type": "shadowsocks",
@@ -198,16 +190,8 @@ class Outbound:
                 password = parsed_rest.path[:-1]  # Remove the trailing `/`
                 remarks = parse_qs(parsed_rest.query).get("remarks", [""])[0]
                 self.__name = b64decode(remarks)
-                self.mihomo = {
-                    "type": "ssr",
-                    "server": server,
-                    "port": int(port),
-                    "protocol": protocol,
-                    "method": method,
-                    "obfs": obfs,
-                    "password": password,
-                }
-                # FIXME: generate sing config
+                # SSR not supported in sing-box
+                raise ValueError("SSR protocol is not supported")
             case "trojan":
                 parts = parsed_url.netloc.split("@")
                 if len(parts) != 2:
@@ -218,15 +202,6 @@ class Outbound:
                 sni = qs.get("peer", [""])[0]
                 skip_cert_verify = qs.get("allowInsecure", [False])[0] == "1"
                 self.__name = unquote(parsed_url.fragment, encoding="utf-8")
-                self.mihomo = {
-                    "type": "trojan",
-                    "server": server,
-                    "port": int(port),
-                    "udp": True,
-                    "password": password,
-                    "sni": sni,
-                    "skip-cert-verify": skip_cert_verify,
-                }
                 self.sing = {
                     **SING_DIAL,
                     "type": "trojan",
@@ -252,19 +227,6 @@ class Outbound:
                 transport = qs.get("type", [""])[0]
                 fp = qs.get("fp", [""])[0]
                 self.__name = unquote(parsed_url.fragment, encoding="utf-8")
-                self.mihomo = {
-                    "type": "vless",
-                    "server": server,
-                    "port": int(port),
-                    "udp": True,
-                    "uuid": uuid,
-                    "servername": sni,
-                    "flow": flow,
-                    "network": "tcp",
-                    "client-fingerprint": fp,
-                }
-                if security == "tls":
-                    self.mihomo["tls"] = True
                 self.sing = {
                     **SING_DIAL,
                     "type": "vless",
@@ -281,20 +243,57 @@ class Outbound:
                 }
                 if transport == "grpc":
                     grpc_service_name = qs.get("serviceName", [""])[0]
-                    self.mihomo["grpc-opts"] = {"grpc-service-name": grpc_service_name}
                     self.sing["transport"] = {
                         "type": "grpc",
                         "service_name": grpc_service_name,
                     }
+            case "vmess":
+                # vmess://base64(JSON)
+                # The JSON contains: v, ps, add, port, id, aid, net, type, host, path, tls
+                try:
+                    json_str = b64decode(parsed_url.netloc)
+                    # Handle malformed JSON (missing closing quote for tls field)
+                    if json_str.endswith('"tls":"}'):
+                        json_str = json_str.replace('"tls":"}', '"tls":""}')
+                    vmess_config = json.loads(json_str)
+                except Exception:
+                    raise ValueError("Invalid VMess URL format")
+
+                server = vmess_config.get("add", "")
+                port = vmess_config.get("port", "")
+                uuid = vmess_config.get("id", "")
+                alter_id = int(vmess_config.get("aid", "0"))
+                net = vmess_config.get("net", "tcp")
+                self.__name = vmess_config.get("ps", "")
+
+                # Build sing-box config
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "vmess",
+                    "server": server,
+                    "server_port": int(port),
+                    "uuid": uuid,
+                    "alter_id": alter_id,
+                    "security": "auto",
+                    "network": "tcp",
+                }
+
+                # Handle websocket transport
+                if net == "ws":
+                    host = vmess_config.get("host", "")
+                    path = vmess_config.get("path", "")
+                    transport_config = {
+                        "type": "ws",
+                        "path": path,
+                    }
+                    if host:
+                        transport_config["headers"] = {"Host": host}
+                    self.sing["transport"] = transport_config
             case _:
                 raise ValueError("Unknown scheme")
 
     def get_named_config(self, name, proxy_type):
-        if proxy_type == "mihomo":
-            config = self.mihomo.copy()
-            config["name"] = name
-            return config
-        elif proxy_type == "sing":
+        if proxy_type == "sing":
             config = self.sing.copy()
             config["tag"] = name
             return config
