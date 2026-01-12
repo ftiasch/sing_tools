@@ -1,11 +1,11 @@
 db_path: ./db.json
 
 timeout: 10
-paramiko:
-  host: cn-relay.internet.limao.tech
 providers:
   ok: 
     url: https://rss.okgfw.top/link/C7glPw7oQlPThsUV?mu=singbox
+    paramiko:
+      host: cn-relay.internet.limao.tech
   dg: 
     url: https://8eb7a3b54041484400c88f3c055d8495.static-media-bkt-shanghai-aliyun-ossapi.com/s?t=8eb7a3b54041484400c88f3c055d8495.jpg
     ua: sing-box

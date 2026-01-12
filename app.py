@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import subprocess
 from typing import Annotated
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -44,6 +45,7 @@ class ParamikoConfig(BaseModel):
 class ProviderConfig(BaseModel):
     url: str
     ua: str = ""
+    paramiko: ParamikoConfig | None = None
 
 
 class HostConfig(BaseModel):
@@ -55,7 +57,6 @@ class Config(BaseModel):
     db_path: str
     timeout: int
     github_proxy: str = ""
-    paramiko: ParamikoConfig
     providers: dict[str, ProviderConfig]
     hosts: dict[str, HostConfig]
 
@@ -379,28 +380,51 @@ def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
     db = FileUtils._load_db(config)
     if "providers" not in db:
         db["providers"] = {}
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.connect(config.paramiko.host)
     provider_pattern = re.compile(provider_selector)
+
+    ssh = None
+    current_ssh_host = None
+
     try:
         for name, provider_config in config.providers.items():
             if not provider_pattern.match(name):
                 continue
             logging.info("%s: Downloading...", name)
+
+            # Build curl command
             curl_command = f"curl -4 -m {config.timeout}"
             if provider_config.ua:
                 curl_command += f" -A '{provider_config.ua}'"
             curl_command += f" '{provider_config.url}'"
-            _, stdout, _ = ssh.exec_command(curl_command)
-            stdout = stdout.read().decode("utf-8")
-            if stdout:
-                db["providers"][name] = db["providers"].get(name, []) + [stdout]
+
+            # Check if provider has paramiko config
+            if provider_config.paramiko:
+                ssh_host = provider_config.paramiko.host
+                # Reconnect only if host changed
+                if ssh is None or current_ssh_host != ssh_host:
+                    if ssh is not None:
+                        ssh.close()
+                    ssh = paramiko.SSHClient()
+                    ssh.load_system_host_keys()
+                    ssh.connect(ssh_host)
+                    current_ssh_host = ssh_host
+                _, stdout, _ = ssh.exec_command(curl_command)
+                content = stdout.read().decode("utf-8")
+            else:
+                # Download locally
+                result = subprocess.run(
+                    curl_command, shell=True, capture_output=True, text=True
+                )
+                content = result.stdout
+
+            if content:
+                db["providers"][name] = db["providers"].get(name, []) + [content]
                 logging.info("%s: Downloaded", name)
             else:
                 logging.error("%s: Failed to download", name)
     finally:
-        ssh.close()
+        if ssh is not None:
+            ssh.close()
         FileUtils._save_db(config, db)
 
 
