@@ -18,7 +18,7 @@ hosts:
   camp-pk:
     <<: *base
     outbounds:
-      - ft
+      - dg
     sudo: true
   camp-bb:
     <<: *base
