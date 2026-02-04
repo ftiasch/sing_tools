@@ -30,6 +30,10 @@ hosts:
     outbounds:
       - ok
     ssh_user: root
+  gl0:
+    <<: *base
+    outbounds:
+      - dg
   # marf-bj:
   #   <<: *base
   #   outbounds:

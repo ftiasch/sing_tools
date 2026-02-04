@@ -1,6 +1,5 @@
 from io import StringIO
 
-import pyinfra.facts.server
 from pyinfra import host
 from pyinfra.operations import files, server
 
@@ -15,6 +14,13 @@ files.put(
     name="Write generated configuration to configuration file",
     src=StringIO(config_content),
     dest=config_path,
+    _sudo=host.data.sudo,
 )
 
-server.service(service="sing-box", restarted=True, _sudo=host.data.sudo)
+# Restart sing-box service
+# Note: On OpenWrt/ImmortalWrt, the service must be enabled via UCI to start
+server.service(
+    service="sing-box",
+    restarted=True,
+    _sudo=host.data.sudo,
+)
