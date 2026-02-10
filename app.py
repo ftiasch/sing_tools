@@ -373,6 +373,39 @@ app = typer.Typer()
 
 
 @app.command()
+def add(provider: str, file_path: str):
+    """Import subscription from a local file for a provider."""
+    config_dict = FileUtils._load_yaml_file("config.yaml")
+    config = Config(**config_dict)
+
+    if provider not in config.providers:
+        logging.error("Provider '%s' not found in config", provider)
+        raise typer.Exit(1)
+
+    db = FileUtils._load_db(config)
+    if "providers" not in db:
+        db["providers"] = {}
+
+    try:
+        with open(file_path, "r") as f:
+            content = f.read()
+    except FileNotFoundError:
+        logging.error("File not found: %s", file_path)
+        raise typer.Exit(1)
+
+    # Validate content by parsing it (reuse download's validation logic)
+    outbounds = list(Subscription.parse(provider, content))
+    if outbounds:
+        db["providers"][provider] = content
+        logging.info("%s: Imported from file (%d outbounds)", provider, len(outbounds))
+    else:
+        logging.warning("%s: File content contains no valid outbounds, skipping", provider)
+        raise typer.Exit(1)
+
+    FileUtils._save_db(config, db)
+
+
+@app.command()
 def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
     config_dict = FileUtils._load_yaml_file("config.yaml")
     config = Config(**config_dict)
