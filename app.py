@@ -418,8 +418,13 @@ def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
                 content = result.stdout
 
             if content:
-                db["providers"][name] = db["providers"].get(name, []) + [content]
-                logging.info("%s: Downloaded", name)
+                # Validate content by parsing it
+                outbounds = list(Subscription.parse(name, content))
+                if outbounds:
+                    db["providers"][name] = content
+                    logging.info("%s: Downloaded (%d outbounds)", name, len(outbounds))
+                else:
+                    logging.warning("%s: Downloaded content contains no valid outbounds, skipping", name)
             else:
                 logging.error("%s: Failed to download", name)
     finally:
@@ -481,9 +486,9 @@ def _generate(host):
     db = FileUtils._load_db(config)
     outbounds = []
     for name in host_config.outbounds:
-        output = db["providers"][name]
+        content = db["providers"][name]
         logging.info("%s: Parsing proxies...", name)
-        for o in Subscription.parse(name, output[-1]):
+        for o in Subscription.parse(name, content):
             # Handle both Outbound and SimpleOutbound types
             outbounds.append(o)
 
