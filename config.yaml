@@ -6,11 +6,13 @@ providers:
     url: https://rss.okgfw.top/link/C7glPw7oQlPThsUV?mu=singbox
     paramiko:
       host: cn-relay.internet.limao.tech
-  dg: 
-    url: https://8eb7a3b54041484400c88f3c055d8495.static-media-bkt-shanghai-aliyun-ossapi.com/s?t=8eb7a3b54041484400c88f3c055d8495.jpg
-    ua: sing-box
+  dg:
+    url: https://1b5a47dc025a1d3b27ffa811f3668dac.r7kq-2nfa-hg9x-bt4m-y3pw.sbs/s?t=1b5a47dc025a1d3b27ffa811f3668dac.jpg&route=1
+    # ua: sing-box
   ft:
     url: https://ft-98rimvre.tutunode.com/gateway/feitu?token=ce74fb7ae0efa99709c3cdbac2e38695
+    paramiko:
+      host: cn-relay.internet.limao.tech
 hosts:
   base: &base
     type: sing
@@ -18,7 +20,7 @@ hosts:
   camp-pk:
     <<: *base
     outbounds:
-      - ok
+      - dg
     sudo: true
   camp-bb:
     <<: *base
