@@ -22,27 +22,22 @@ hosts:
     outbounds:
       - dg
     sudo: true
+    ssh_hostname: 127.0.0.1
   camp-bb:
     <<: *base
     outbounds:
       - ok
     ssh_user: root
-  camp-box:
-    <<: *base
-    outbounds:
-      - ok
-    ssh_user: root
-  gl0:
+  # camp-box:
+  #   <<: *base
+  #   outbounds:
+  #     - ok
+  #   ssh_user: root
+  mt3000-st:
     <<: *base
     outbounds:
       - dg
-  # marf-bj:
-  #   <<: *base
-  #   outbounds:
-  #     - ok
-  # marf-sh:
-  #   <<: *base
-  #   outbounds:
-  #     - ok
+    ssh_hostname: 10.73.64.3
+    ssh_user: root
 
 github_proxy: https://ghfast.top/
