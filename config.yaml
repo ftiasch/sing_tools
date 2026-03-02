@@ -17,12 +17,12 @@ hosts:
   base: &base
     type: sing
     sudo: false
-  camp-pk:
-    <<: *base
-    outbounds:
-      - dg
-    sudo: true
-    ssh_hostname: 127.0.0.1
+  # camp-pk:
+  #   <<: *base
+  #   outbounds:
+  #     - dg
+  #   sudo: true
+  #   ssh_hostname: 127.0.0.1
   camp-bb:
     <<: *base
     outbounds:
@@ -38,6 +38,12 @@ hosts:
     outbounds:
       - dg
     ssh_hostname: 10.73.64.3
+    ssh_user: root
+  mt3000-ww:
+    <<: *base
+    outbounds:
+      - dg
+    ssh_hostname: 10.73.64.6
     ssh_user: root
 
 github_proxy: https://ghfast.top/
