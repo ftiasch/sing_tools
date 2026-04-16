@@ -215,6 +215,29 @@ class Outbound:
                         "server_name": sni,
                     },
                 }
+            case "anytls":
+                parts = parsed_url.netloc.split("@")
+                if len(parts) != 2:
+                    raise ValueError("Invalid AnyTLS URL format")
+                password, server_port = parts
+                server, port = parse_server_port(server_port)
+                qs = parse_qs(parsed_url.query)
+                sni = qs.get("sni", [""])[0]
+                skip_cert_verify = qs.get("insecure", [False])[0] == "1"
+                self.__name = unquote(parsed_url.fragment, encoding="utf-8")
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "anytls",
+                    "server": server,
+                    "server_port": int(port),
+                    "password": password,
+                    "tls": {
+                        "enabled": True,
+                        "insecure": skip_cert_verify,
+                        "server_name": sni,
+                    },
+                }
+                self.sing.pop("tcp_fast_open", None)
             case "vless":
                 parts = parsed_url.netloc.split("@")
                 if len(parts) != 2:
@@ -399,7 +422,9 @@ def add(provider: str, file_path: str):
         db["providers"][provider] = content
         logging.info("%s: Imported from file (%d outbounds)", provider, len(outbounds))
     else:
-        logging.warning("%s: File content contains no valid outbounds, skipping", provider)
+        logging.warning(
+            "%s: File content contains no valid outbounds, skipping", provider
+        )
         raise typer.Exit(1)
 
     FileUtils._save_db(config, db)
@@ -457,7 +482,10 @@ def download(provider_selector: Annotated[str, typer.Argument()] = ".*"):
                     db["providers"][name] = content
                     logging.info("%s: Downloaded (%d outbounds)", name, len(outbounds))
                 else:
-                    logging.warning("%s: Downloaded content contains no valid outbounds, skipping", name)
+                    logging.warning(
+                        "%s: Downloaded content contains no valid outbounds, skipping",
+                        name,
+                    )
             else:
                 logging.error("%s: Failed to download", name)
     finally:
