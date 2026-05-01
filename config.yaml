@@ -3,7 +3,7 @@ db_path: ./db.json
 timeout: 10
 providers:
   ok:
-    url: https://rss.okgfw.top/link/C7glPw7oQlPThsUV?mu=singbox
+    url: https://ccgfw.top/link/C7glPw7oQlPThsUV?mu=2
   dg:
     url: https://1b5a47dc025a1d3b27ffa811f3668dac.r7kq-2nfa-hg9x-bt4m-y3pw.sbs/s?t=1b5a47dc025a1d3b27ffa811f3668dac.jpg&route=1
     # ua: sing-box
@@ -16,13 +16,13 @@ hosts:
   camp-pk:
     <<: *base
     outbounds:
-      - ok
+      - dg
     ssh_hostname: 10.73.64.4
     ssh_user: root
   camp-bb:
     <<: *base
     outbounds:
-      - ok
+      - dg
     ssh_user: root
   # camp-box:
   #   <<: *base
@@ -39,7 +39,7 @@ hosts:
   mt3000-ww:
     <<: *base
     outbounds:
-      - ft
+      - dg
     ssh_hostname: 10.73.64.6
     ssh_user: root
 
