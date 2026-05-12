@@ -21,7 +21,7 @@ hosts:
   camp-bb:
     <<: *base
     outbounds:
-      - dg
+      - ok
     ssh_user: root
   # camp-box:
   #   <<: *base
@@ -37,8 +37,14 @@ hosts:
   mt3000-ww:
     <<: *base
     outbounds:
-      - dg
+      - ok
     ssh_user: root
     ssh_hostname: 100.69.172.85
+  mt3000-st:
+    <<: *base
+    outbounds:
+      - dg
+    ssh_user: root
+    ssh_hostname: 100.116.175.64
 
 github_proxy: https://ghfast.top/

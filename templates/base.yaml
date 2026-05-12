@@ -55,10 +55,15 @@ route:
     - protocol: dns
       ip_cidr: 223.5.5.5
       action: hijack-dns
-    - port: [41641]
+    - port: [3478, 41641]
       protocol: udp
       outbound: direct
-    - process_name: easytier-core
+    - domain_regex: ["^derp.+\\.tailscale\\.com"]
+      outbound: direct
+    - process_name: 
+        - easytier-core
+        - tailscaled
+      outbound: direct
       outbound: direct
     - ip_is_private: true
       outbound: direct
