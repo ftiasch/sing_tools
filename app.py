@@ -640,6 +640,11 @@ def _generate(host):
                 "url": github_proxy + url,
             }
         )
+    # postprocess: apply github_proxy to external_ui_download_url
+    if github_proxy and "external_ui_download_url" in output.get("experimental", {}).get("clash_api", {}):
+        clash_api = output["experimental"]["clash_api"]
+        clash_api["external_ui_download_url"] = github_proxy + clash_api["external_ui_download_url"]
+
     return json.dumps(output, ensure_ascii=False, indent=2)
 
 

@@ -140,7 +140,9 @@ experimental:
     store_rdrc: true
   clash_api:
     external_controller: 0.0.0.0:9090
-    # external_ui_download_detour: proxy-out
+    external_ui: dashboard
+    external_ui_download_url: "https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
+    external_ui_download_detour: direct
     access_control_allow_origin:
       - http://127.0.0.1
       - https://metacubexd.pages.dev
