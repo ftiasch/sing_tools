@@ -67,6 +67,13 @@ route:
       outbound: direct
     - ip_is_private: true
       outbound: direct
+    - type: logical
+      mode: and
+      rules:
+        - rule_set: geosite-category-ai-!cn
+          invert: true
+        - rule_set: geosite-google
+      outbound: proxy-out
     - rule_set: geoip-cn
       outbound: direct
     - rule_set: geosite-geolocation-cn
