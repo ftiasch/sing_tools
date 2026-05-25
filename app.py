@@ -271,11 +271,37 @@ class Outbound:
                         "type": "grpc",
                         "service_name": grpc_service_name,
                     }
+            case "hy2" | "hysteria2":
+                # hy2://password@host:port?sni=xxx&alpn=h3&insecure=0#name
+                parts = parsed_url.netloc.split("@")
+                if len(parts) != 2:
+                    raise ValueError("Invalid Hysteria2 URL format")
+                password, server_port = parts
+                server, port = parse_server_port(server_port)
+                qs = parse_qs(parsed_url.query)
+                sni = qs.get("sni", [""])[0]
+                skip_cert_verify = qs.get("insecure", [False])[0] == "1"
+                self.__name = unquote(parsed_url.fragment, encoding="utf-8")
+                self.sing = {
+                    **SING_DIAL,
+                    "type": "hysteria2",
+                    "server": server,
+                    "server_port": int(port),
+                    "password": password,
+                    "tls": {
+                        "enabled": True,
+                        "insecure": skip_cert_verify,
+                        "server_name": sni,
+                    },
+                }
             case "vmess":
                 # vmess://base64(JSON)
                 # The JSON contains: v, ps, add, port, id, aid, net, type, host, path, tls
+                # Note: urlparse.netloc doesn't work here because base64 may contain '/'
+                # which urlparse treats as path separators. Use raw config instead.
                 try:
-                    json_str = b64decode(parsed_url.netloc)
+                    b64_str = config[len("vmess://"):]
+                    json_str = b64decode(b64_str)
                     # Handle malformed JSON (missing closing quote for tls field)
                     if json_str.endswith('"tls":"}'):
                         json_str = json_str.replace('"tls":"}', '"tls":""}')
