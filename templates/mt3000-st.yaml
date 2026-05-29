@@ -1,1 +1,23 @@
-{}
+dns:
+  servers:
+    - tag: dns_proxy
+      type: tls
+      server: 8.8.8.8
+      detour: proxy-out
+    - tag: dns_direct
+      type: tls
+      server: 223.5.5.5
+    - tag: dns_tailscale
+      type: udp
+      server: 100.100.100.100
+      detour: tailscale0-out
+  before_rules:
+    - domain_suffix:
+        - ts.net
+      server: dns_tailscale
+outbounds:
+  - type: direct
+    tag: direct
+  - type: direct
+    tag: tailscale0-out
+    bind_interface: tailscale0
