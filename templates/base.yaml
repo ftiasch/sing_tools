@@ -63,6 +63,16 @@ route:
     - protocol: dns
       ip_cidr: 223.5.5.5
       action: hijack-dns
+    # hijack-dns for TUN's DNS address (172.16.0.2 = @tun + 1).
+    # On Linux with systemd-resolved, sing-box pushes this as the system
+    # DNS via D-Bus. Without an explicit hijack, the query hits the
+    # `ip_is_private: true → outbound: direct` rule below first and
+    # bypasses sing-box's DNS module.
+    - protocol: dns
+      ip_cidr:
+        - 172.16.0.2/32
+        - fd00::2/128
+      action: hijack-dns
     - port: [3478, 41641]
       protocol: udp
       outbound: direct
