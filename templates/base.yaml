@@ -11,6 +11,14 @@ dns:
     - tag: dns_direct
       type: tls
       server: 223.5.5.5
+    - tag: dns_tailscale
+      type: udp
+      server: 100.100.100.100
+      detour: tailscale0-out
+  before_rules:
+    - domain_suffix:
+        - ts.net
+      server: dns_tailscale
   # before_rules:
   #   - query_type:
   #       - AAAA
@@ -60,10 +68,9 @@ route:
       outbound: direct
     - domain_regex: ["^derp.+\\.tailscale\\.com"]
       outbound: direct
-    - process_name: 
+    - process_name:
         - easytier-core
         - tailscaled
-      outbound: direct
       outbound: direct
     - ip_is_private: true
       outbound: direct
@@ -93,7 +100,7 @@ route:
         - geosite-category-game-platforms-download
         - geosite-category-games-cn
         - geosite-microsoft@cn
-        - geosite-steam@cn
+        - geosite-steam
       outbound: direct
     - domain_suffix:
         - aur.archlinux.org
@@ -133,6 +140,9 @@ inbounds:
 outbounds:
   - type: direct
     tag: direct
+  - type: direct
+    tag: tailscale0-out
+    bind_interface: tailscale0
 experimental:
   cache_file:
     enabled: true
@@ -148,4 +158,3 @@ experimental:
       - https://metacubexd.pages.dev
       - https://yacd.haishan.me
     access_control_allow_private_network: true
-
