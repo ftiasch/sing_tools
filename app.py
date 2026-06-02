@@ -592,9 +592,24 @@ def _generate(host):
     proxy_groups = ProxyGrouper(proxies).groups
     github_proxy = config.github_proxy
     output = FileUtils._load_yaml_file("templates/base.yaml")
-    output = dict_merge(
-        output, FileUtils._load_yaml_file(os.path.join("templates", f"{host}.yaml"))
+    host_template = FileUtils._load_yaml_file(
+        os.path.join("templates", f"{host}.yaml")
     )
+
+    # Extract list keys that host template controls
+    host_inbounds = host_template.pop("inbounds", None)  # replace if present
+    after_inbounds = host_template.pop("after_inbounds", [])  # always append
+    extra_outbounds = host_template.pop("outbounds", [])
+    extra_route_rules = (host_template.get("route") or {}).pop("rules", [])
+    if "route" in host_template and not host_template["route"]:
+        del host_template["route"]
+
+    output = dict_merge(output, host_template)
+
+    if host_inbounds is not None:
+        output["inbounds"] = host_inbounds
+    output["inbounds"].extend(after_inbounds)
+    output["outbounds"].extend(extra_outbounds)
 
     # add proxy_groups & proxies
     proxy_group_template = FileUtils._load_yaml_file("templates/proxy_group.yaml")
@@ -608,8 +623,14 @@ def _generate(host):
     _combine_rules(output["dns"])
     _combine_rules(output["route"])
 
+    # Prepend host-specific route rules (highest priority)
+    output["route"]["rules"] = extra_route_rules + output["route"]["rules"]
+
     # postprocess: replace rules against invalid outbounds with reject
     valid_outbounds = {"direct"} | set(proxy_groups.keys())
+    for ob in output["outbounds"]:
+        if "tag" in ob:
+            valid_outbounds.add(ob["tag"])
     for rule in output["route"]["rules"]:
         outbound = rule.get("outbound", None)
         if outbound is not None and outbound not in valid_outbounds:
