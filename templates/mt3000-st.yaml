@@ -2,6 +2,6 @@ after_inbounds:
   - type: vless
     tag: relay-in
     listen: "100.116.175.64"
-    listen_port: 8443
+    listen_port: 46375
     users:
       - uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
