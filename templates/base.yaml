@@ -1,53 +1,46 @@
 log:
   level: warn
-  # output: box.log
   timestamp: true
 dns:
   servers:
-    - tag: dns_proxy
-      type: tls
-      server: 8.8.8.8
-      detour: proxy-out
-    - tag: dns_direct
-      type: tls
-      server: 223.5.5.5
-    - tag: dns_tailscale
-      type: udp
-      server: 100.100.100.100
-      detour: tailscale0-out
+  - tag: dns_proxy
+    type: tls
+    server: 8.8.8.8
+    detour: proxy-out
+  - tag: dns_direct
+    type: tls
+    server: 223.5.5.5
+  - tag: dns_tailscale
+    type: udp
+    server: 100.100.100.100
+    detour: tailscale0-out
   before_rules:
-    - domain_suffix:
-        - ts.net
-      server: dns_tailscale
-  # before_rules:
-  #   - query_type:
-  #       - AAAA
-  #     action: reject
-  #     method: default
-  #     disable_cache: true
+  - domain_suffix:
+    - ts.net
+    server: dns_tailscale
   after_rules:
-    - domain_suffix:
-        - limao.tech
-        - ftiasch.xyz
-      server: dns_direct
-    - rule_set:
-        - geosite-geolocation-cn
-      server: dns_direct
-    - type: logical
-      mode: and
-      rules:
-        - rule_set: geosite-geolocation-!cn
-          invert: true
-        - rule_set: geoip-cn
-      server: dns_direct
-    - type: logical
-      mode: and
-      rules:
-        - rule_set: geosite-geolocation-!cn
-          invert: true
-        - ip_is_private: true
-      server: dns_proxy
-      client_subnet: 223.5.5.5/24
+  - domain_suffix:
+    - limao.tech
+    - ftiasch.xyz
+    server: dns_direct
+  - rule_set:
+    - geosite-geolocation-cn
+    server: dns_direct
+  - type: logical
+    mode: and
+    rules:
+    - rule_set: geosite-geolocation-!cn
+      invert: true
+    - rule_set: geoip-cn
+    server: dns_direct
+  - type: logical
+    mode: and
+    rules:
+    - rule_set: geosite-geolocation-!cn
+      invert: true
+    - ip_is_private: true
+    server: dns_proxy
+    client_subnet: 223.5.5.5/24
   final: dns_proxy
   strategy: ipv4_only
   independent_cache: false
@@ -58,101 +51,98 @@ route:
     strategy: ipv4_only
   rule_set: []
   before_rules:
-    - inbound: tun-in
-      action: sniff
-    - protocol: dns
-      ip_cidr: 223.5.5.5
-      action: hijack-dns
-    # hijack-dns for TUN's DNS address (172.16.0.2 = @tun + 1).
-    # On Linux with systemd-resolved, sing-box pushes this as the system
-    # DNS via D-Bus. Without an explicit hijack, the query hits the
-    # `ip_is_private: true → outbound: direct` rule below first and
-    # bypasses sing-box's DNS module.
-    - protocol: dns
-      ip_cidr:
-        - 172.16.0.2/32
-        - fd00::2/128
-      action: hijack-dns
-    - port: [3478, 41641]
-      protocol: udp
-      outbound: direct
-    - domain_regex: ["^derp.+\\.tailscale\\.com"]
-      outbound: direct
-    - process_name:
-        - easytier-core
-        - tailscaled
-      outbound: direct
-    - ip_is_private: true
-      outbound: direct
-    - type: logical
-      mode: and
-      rules:
-        - rule_set: geosite-category-ai-!cn
-          invert: true
-        - rule_set: geosite-google
-      outbound: proxy-out
+  - inbound: tun-in
+    action: sniff
+  - protocol: dns
+    ip_cidr: 223.5.5.5
+    action: hijack-dns
+  - protocol: dns
+    ip_cidr:
+    - 172.16.0.2/32
+    - fd00::2/128
+    action: hijack-dns
+  - port:
+    - 3478
+    - 41641
+    protocol: udp
+    outbound: direct
+  - domain_regex:
+    - ^derp.+\.tailscale\.com
+    outbound: direct
+  - process_name:
+    - easytier-core
+    - tailscaled
+    outbound: direct
+  - ip_cidr:
+    - 100.0.0.0/8
+    - fd7a:115c:a1e0::/48
+    outbound: tailscale0-out
+  - ip_is_private: true
+    outbound: direct
+  - type: logical
+    mode: and
+    rules:
+    - rule_set: geosite-category-ai-!cn
+      invert: true
+    - rule_set: geosite-google
+    outbound: proxy-out
+  - rule_set: geoip-cn
+    outbound: direct
+  - rule_set: geosite-geolocation-cn
+    outbound: direct
+  - type: logical
+    mode: and
+    rules:
+    - rule_set: geosite-geolocation-!cn
+      invert: true
     - rule_set: geoip-cn
-      outbound: direct
-    - rule_set: geosite-geolocation-cn
-      outbound: direct
-    - type: logical
-      mode: and
-      rules:
-        - rule_set: geosite-geolocation-!cn
-          invert: true
-        - rule_set: geoip-cn
-      outbound: direct
-    - domain_suffix:
-        - codeforces.com
-      outbound: direct
-    - rule_set:
-        - geosite-apple@cn
-        - geosite-category-game-platforms-download
-        - geosite-category-games-cn
-        - geosite-microsoft@cn
-        - geosite-steam
-      outbound: direct
-    - domain_suffix:
-        - aur.archlinux.org
-      outbound: us-out
-    - rule_set:
-        - geosite-category-ai-!cn
-      outbound: us-out
+    outbound: direct
+  - domain_suffix:
+    - codeforces.com
+    outbound: direct
+  - rule_set:
+    - geosite-apple@cn
+    - geosite-category-game-platforms-download
+    - geosite-category-games-cn
+    - geosite-microsoft@cn
+    - geosite-steam
+    outbound: direct
+  - domain_suffix:
+    - aur.archlinux.org
+    outbound: us-out
+  - rule_set:
+    - geosite-category-ai-!cn
+    outbound: us-out
   after_rules: []
-    # - port: 853
-    #   network: tcp
-    #   outbound: direct
-    # - port: 443
-    #   network: udp
-    #   outbound: direct
-    # - port: 123 # NTP
-    #   outbound: direct
-    # - port: 3478 # stun
-    #   outbound: direct
   final: proxy-out
   auto_detect_interface: true
 inbounds:
-  - type: tun
-    tag: tun-in
-    interface_name: tun0
-    address:
-      - 172.16.0.1/30
-      - fd00::1/126
-    mtu: 1492
-    auto_route: true
-    # auto_redirect: true
-    strict_route: true
-    stack: system
-  - type: mixed
-    tag: http-in
-    listen: "::"
-    listen_port: 8001
+- type: tun
+  tag: tun-in
+  interface_name: tun0
+  address:
+  - 172.16.0.1/30
+  - fd00::1/126
+  mtu: 1492
+  auto_route: true
+  strict_route: true
+  stack: system
+- type: mixed
+  tag: http-in
+  listen: '::'
+  listen_port: 8001
+- type: vless
+  tag: relay-in
+  listen: '::'
+  listen_port: 48443
+  users:
+  - uuid: b56dbbfd-639e-4e50-af16-a26d70e68480
 outbounds:
-  - type: direct
-    tag: direct
-  - type: direct
-    tag: tailscale0-out
-    bind_interface: tailscale0
+- type: direct
+  tag: direct
+- type: direct
+  tag: tailscale0-out
+  bind_interface: tailscale0
 experimental:
   cache_file:
     enabled: true
@@ -161,10 +151,10 @@ experimental:
   clash_api:
     external_controller: 0.0.0.0:9090
     external_ui: dashboard
-    external_ui_download_url: "https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
+    external_ui_download_url: https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip
     external_ui_download_detour: direct
     access_control_allow_origin:
-      - http://127.0.0.1
-      - https://metacubexd.pages.dev
-      - https://yacd.haishan.me
+    - http://127.0.0.1
+    - https://metacubexd.pages.dev
+    - https://yacd.haishan.me
     access_control_allow_private_network: true

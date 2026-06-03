@@ -15,12 +15,26 @@ hosts:
     sudo: false
   camp-pk:
     <<: *base
-    outbounds: []
+    outbounds:
+      - _group: [proxy-out, us-out]
+        type: vless
+        tag: relay-out
+        server: "100.116.175.64"
+        server_port: 48443
+        uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
+        bind_interface: tailscale0
     sudo: true
   camp-bb:
     <<: *base
     outbounds:
-      - ok
+      # - ok
+      - _group: [proxy-out, us-out]
+        type: vless
+        tag: relay-out
+        server: "100.116.175.64"
+        server_port: 48443
+        uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
+        bind_interface: tailscale0
     ssh_user: root
   # camp-box:
   #   <<: *base
