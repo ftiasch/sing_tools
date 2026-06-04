@@ -18,7 +18,7 @@ hosts:
     outbounds:
       - _group: [proxy-out, us-out]
         type: vless
-        tag: relay-out
+        tag: mt3000-st
         server: "100.116.175.64"
         server_port: 48443
         uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
@@ -30,7 +30,7 @@ hosts:
       # - ok
       - _group: [proxy-out, us-out]
         type: vless
-        tag: relay-out
+        tag: mt3000-st
         server: "100.116.175.64"
         server_port: 48443
         uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
