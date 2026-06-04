@@ -20,6 +20,9 @@ dns:
     server: dns_tailscale
   after_rules:
   - domain_suffix:
+    - push.apple.com
+    server: dns_direct
+  - domain_suffix:
     - limao.tech
     - ftiasch.xyz
     server: dns_direct
@@ -61,6 +64,13 @@ route:
     - 172.16.0.2/32
     - fd00::2/128
     action: hijack-dns
+  # APNs push — force direct to prevent push notification failures
+  - domain_suffix:
+    - push.apple.com
+    outbound: direct
+  - ip_cidr:
+    - 17.0.0.0/8
+    outbound: direct
   - port:
     - 3478
     - 41641
