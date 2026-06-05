@@ -45,7 +45,7 @@ dns:
     server: dns_proxy
     client_subnet: 223.5.5.5/24
   final: dns_proxy
-  strategy: ipv4_only
+  strategy: prefer_ipv4
   independent_cache: false
   cache_capacity: 1048576
 route:
@@ -57,7 +57,9 @@ route:
   - inbound: tun-in
     action: sniff
   - protocol: dns
-    ip_cidr: 223.5.5.5
+    ip_cidr:
+    - 223.5.5.5
+    - 2400:3200::1
     action: hijack-dns
   - protocol: dns
     ip_cidr:
