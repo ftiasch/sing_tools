@@ -28,11 +28,18 @@ hosts:
     <<: *base
     outbounds:
       # - ok
-      - _group: [proxy-out, us-out]
+      - _group: [proxy-out]
         type: vless
         tag: mt3000-st
         server: "100.116.175.64"
         server_port: 48443
+        uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
+        bind_interface: tailscale0
+      - _group: [us-out]
+        type: vless
+        tag: mt3000-st-us
+        server: "100.116.175.64"
+        server_port: 48444
         uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
         bind_interface: tailscale0
     ssh_user: root

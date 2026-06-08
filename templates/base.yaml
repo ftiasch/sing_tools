@@ -56,6 +56,10 @@ route:
   before_rules:
   - inbound: tun-in
     action: sniff
+  - inbound: relay-in
+    outbound: proxy-out
+  - inbound: relay-us-in
+    outbound: us-out
   - protocol: dns
     ip_cidr:
     - 223.5.5.5
@@ -147,6 +151,12 @@ inbounds:
   tag: relay-in
   listen: '::'
   listen_port: 48443
+  users:
+  - uuid: b56dbbfd-639e-4e50-af16-a26d70e68480
+- type: vless
+  tag: relay-us-in
+  listen: '::'
+  listen_port: 48444
   users:
   - uuid: b56dbbfd-639e-4e50-af16-a26d70e68480
 outbounds:
