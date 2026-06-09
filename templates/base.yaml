@@ -45,7 +45,7 @@ dns:
     server: dns_proxy
     client_subnet: 223.5.5.5/24
   final: dns_proxy
-  strategy: prefer_ipv4
+  strategy: ipv4_only
   independent_cache: false
   cache_capacity: 1048576
 route:
