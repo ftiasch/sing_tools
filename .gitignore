@@ -1,0 +1,11 @@
+*.egg-info
+__pycache__
+run
+db.json
+dashboard/
+/cache.db
+/templates/marf-bj.yaml
+/templates/marf-sh.yaml
+/templates/mt3000-bj.yaml
+/templates/mt3000-ww.yaml
+/init.d/mihomo

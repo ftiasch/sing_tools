@@ -1,0 +1,59 @@
+db_path: ./db.json
+
+timeout: 10
+providers:
+  ok:
+    url: https://rss.csgfw.top/link/C7glPw7oQlPThsUV?mu=2
+  dg:
+    url: https://1b5a47dc025a1d3b27ffa811f3668dac.r7kq-2nfa-hg9x-bt4m-y3pw.sbs/s?t=1b5a47dc025a1d3b27ffa811f3668dac.jpg&route=1
+    # ua: sing-box
+  ft:
+    url: https://ft-sub.tutunode.com/ft/tk/ce74fb7ae0efa99709c3cdbac2e38695
+
+# Shared outbound definitions
+vless_outbounds: &vless_outbounds
+  - _group: [proxy-out]
+    type: vless
+    tag: mt3000-st
+    server: "100.116.175.64"
+    server_port: 48443
+    uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
+    bind_interface: tailscale0
+  - _group: [us-out]
+    type: vless
+    tag: mt3000-st-us
+    server: "100.116.175.64"
+    server_port: 48444
+    uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
+    bind_interface: tailscale0
+hosts:
+  base: &base
+    type: sing
+    sudo: false
+  # camp-pk:
+  #   <<: *base
+  #   outbounds:
+  #     - dg
+  #   sudo: true
+  camp-bb:
+    <<: *base
+    outbounds: *vless_outbounds
+    ssh_user: root
+  # camp-box:
+  #   <<: *base
+  #   outbounds:
+  #     - dg
+  #   ssh_hostname: 10.73.64.8
+  #   ssh_user: root
+  camp-box:
+    <<: *base
+    outbounds: *vless_outbounds
+    ssh_user: root
+  mt3000-st:
+    <<: *base
+    outbounds:
+      - ft
+      - ok
+    ssh_user: root
+
+github_proxy: https://ghfast.top/
