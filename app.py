@@ -587,9 +587,9 @@ class ProxyGrouper:
             if HK_PATTERN.search(name):
                 self.__add("hk-out", name)
             if JP_PATTERN.search(name):
-                self.__add("jp-out", name)
+                self.__add("ai-out", name)
             if US_PATTERN.search(name):
-                self.__add("us-out", name)
+                self.__add("ai-out", name)
 
     def __add(self, group, name):
         if group not in self.groups:

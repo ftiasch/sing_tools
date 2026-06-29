@@ -85,8 +85,7 @@ Subscriptions can be downloaded:
 
 Proxies are automatically grouped by region:
 - **HK/Hong Kong**: `hk-out`
-- **JP/Japan**: `jp-out`
-- **US/United States**: `us-out`
+- **JP + US + AI sites**: `ai-out`
 - **RU/Russia**: Excluded (filtered out)
 
 ## Target Hosts

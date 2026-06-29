@@ -19,13 +19,33 @@ vless_outbounds: &vless_outbounds
     server_port: 48443
     uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
     bind_interface: tailscale0
-  - _group: [us-out]
+  - _group: [ai-out]
     type: vless
-    tag: mt3000-st-us
+    tag: mt3000-st-ai
     server: "100.116.175.64"
     server_port: 48444
     uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
     bind_interface: tailscale0
+
+# BWH Reality outbound — keys from setup_bwh.py
+bwh_reality_outbound: &bwh_reality_outbound
+  - _group: [proxy-out, ai-out]
+    type: vless
+    tag: camp-bwh
+    server: "74.82.195.4"
+    server_port: 443
+    uuid: "1870c1a3-cd84-4e91-aac6-551b143e8ed6"
+    flow: xtls-rprx-vision
+    tls:
+      enabled: true
+      server_name: www.apple.com
+      utls:
+        enabled: true
+        fingerprint: chrome
+      reality:
+        enabled: true
+        public_key: "lt2OkFkaGBkQPKvnzfjVFZQOUrBwkkkvt_1GvQp58Qo"
+        short_id: ""
 hosts:
   base: &base
     type: sing
@@ -37,7 +57,7 @@ hosts:
   #   sudo: true
   camp-bb:
     <<: *base
-    outbounds: *vless_outbounds
+    outbounds: *bwh_reality_outbound
     ssh_user: root
   # camp-box:
   #   <<: *base
@@ -47,7 +67,7 @@ hosts:
   #   ssh_user: root
   camp-box:
     <<: *base
-    outbounds: *vless_outbounds
+    outbounds: *bwh_reality_outbound
     ssh_user: root
   mt3000-st:
     <<: *base
@@ -55,5 +75,8 @@ hosts:
       - ft
       - ok
     ssh_user: root
+  camp-bwh:
+    ssh_user: root
+    ssh_hostname: 74.82.195.4
 
 github_proxy: https://ghfast.top/

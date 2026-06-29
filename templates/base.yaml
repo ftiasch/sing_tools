@@ -59,7 +59,7 @@ route:
   - inbound: relay-in
     outbound: proxy-out
   - inbound: relay-us-in
-    outbound: us-out
+    outbound: ai-out
   - protocol: dns
     ip_cidr:
     - 223.5.5.5
@@ -125,10 +125,10 @@ route:
     outbound: direct
   - domain_suffix:
     - aur.archlinux.org
-    outbound: us-out
+    outbound: ai-out
   - rule_set:
     - geosite-category-ai-!cn
-    outbound: us-out
+    outbound: ai-out
   after_rules: []
   final: proxy-out
   auto_detect_interface: true

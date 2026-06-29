@@ -9,3 +9,4 @@ dashboard/
 /templates/mt3000-bj.yaml
 /templates/mt3000-ww.yaml
 /init.d/mihomo
+.camp-bwh-keys.json
