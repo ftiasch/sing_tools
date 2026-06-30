@@ -10,3 +10,4 @@ dashboard/
 /templates/mt3000-ww.yaml
 /init.d/mihomo
 .camp-bwh-keys.json
+pyinfra-debug.log
