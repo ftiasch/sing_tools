@@ -75,6 +75,9 @@ hosts:
       - ft
       - ok
     ssh_user: root
+  ftiasch-zflip:
+    <<: *base
+    outbounds: *bwh_reality_outbound
   camp-bwh:
     ssh_user: root
     ssh_hostname: 74.82.195.4
