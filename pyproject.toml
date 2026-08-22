@@ -21,8 +21,3 @@ select = ["B", "E", "F", "I", "PGH"]
 ignore = [
   "E501" # Line too long
 ]
-
-[dependency-groups]
-dev = [
-    "pytest>=9.1.1",
-]
