@@ -39,7 +39,7 @@ if __name__ == "__main__":
                     "npx",
                     "--yes",
                     "--registry=https://registry.npmjs.org",
-                    "qifi@0.2.0",
+                    "qifi@0.1.0",
                     profile,
                 ],
                 check=True,
