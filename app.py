@@ -355,8 +355,8 @@ class Outbound:
                     if json_str.endswith('"tls":"}'):
                         json_str = json_str.replace('"tls":"}', '"tls":""}')
                     vmess_config = json.loads(json_str)
-                except Exception:
-                    raise ValueError("Invalid VMess URL format")
+                except Exception as err:
+                    raise ValueError("Invalid VMess URL format") from err
 
                 server = vmess_config.get("add", "")
                 port = vmess_config.get("port", "")
@@ -494,7 +494,7 @@ def add(provider: str, file_path: str):
             content = f.read()
     except FileNotFoundError:
         logging.error("File not found: %s", file_path)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     # Validate content by parsing it (reuse download's validation logic)
     outbounds = list(Subscription.parse(provider, content))

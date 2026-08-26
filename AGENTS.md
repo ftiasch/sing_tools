@@ -122,6 +122,9 @@ uv run pyinfra inventory.py -y deploy.py
 
 # Deploy to specific host
 uv run pyinfra inventory.py --limit <hostname> -y deploy.py
+
+# Run lint checks
+./lint.sh
 ```
 
 ## Key Dependencies
@@ -131,6 +134,8 @@ uv run pyinfra inventory.py --limit <hostname> -y deploy.py
 - **typer**: CLI framework
 - **paramiko**: SSH client for proxied downloads
 - **PyYAML**: YAML configuration parsing
+- **ruff**: Python linting
+- **ty**: Python type checking
 
 ## Important Notes
 

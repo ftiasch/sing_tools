@@ -26,7 +26,6 @@ import os
 from io import StringIO
 
 import yaml
-
 from pyinfra import logger
 from pyinfra.context import host
 from pyinfra.facts.files import File
