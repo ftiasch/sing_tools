@@ -27,7 +27,7 @@ vless_outbounds: &vless_outbounds
     uuid: "b56dbbfd-639e-4e50-af16-a26d70e68480"
     bind_interface: tailscale0
 
-# BWH Reality outbound — keys from setup_bwh.py
+# BWH Reality outbound — keys from deploy_bwh_sing.py
 bwh_reality_outbound: &bwh_reality_outbound
   - _group: [proxy-out, ai-out]
     type: vless
@@ -78,6 +78,8 @@ hosts:
   ftiasch-zflip:
     <<: *base
     outbounds: *bwh_reality_outbound
+  # camp-bwh: sing-box 服务端主机，仅作部署目标（无 outbounds，
+  # deploy.py 会跳过，由 deploy_bwh_sing.py 管理）
   camp-bwh:
     ssh_user: root
     ssh_hostname: 74.82.195.4
