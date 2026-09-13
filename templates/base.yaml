@@ -26,6 +26,11 @@ dns:
         - limao.tech
         - ftiasch.xyz
       server: dns_direct
+    # Match downloads before the broader Steam and geolocation rules.
+    - rule_set: geosite-category-game-platforms-download
+      server: dns_direct
+    - rule_set: geosite-steam
+      server: dns_proxy
     - rule_set:
         - geosite-geolocation-cn
       server: dns_direct
@@ -104,6 +109,11 @@ route:
           invert: true
         - rule_set: geosite-google
       outbound: proxy-out
+    # Keep downloads direct before routing other Steam services through VPN.
+    - rule_set: geosite-category-game-platforms-download
+      outbound: direct
+    - rule_set: geosite-steam
+      outbound: proxy-out
     - rule_set:
         - geoip-cn
         - geosite-geolocation-cn
@@ -117,10 +127,8 @@ route:
       outbound: direct
     - rule_set:
         - geosite-apple@cn
-        - geosite-category-game-platforms-download
         - geosite-category-games-cn
         - geosite-microsoft@cn
-        - geosite-steam
       outbound: direct
   after_rules: []
   final: proxy-out
